@@ -34,6 +34,39 @@ for name in ("android/app/build.gradle", "android/app/build.gradle.kts"):
     print(f"Configured {path}")
 PY
 
+python3 - "$PKG" <<'PY'
+import re
+import sys
+from pathlib import Path
+
+pkg = sys.argv[1]
+kotlin_root = Path("android/app/src/main/kotlin")
+java_root = Path("android/app/src/main/java")
+target_dir = Path("android/app/src/main/kotlin") / Path(*pkg.split("."))
+target = target_dir / "MainActivity.kt"
+
+source = None
+for root in (kotlin_root, java_root):
+    if not root.exists():
+        continue
+    for candidate in list(root.rglob("MainActivity.kt")) + list(root.rglob("MainActivity.java")):
+        source = candidate
+        break
+    if source:
+        break
+
+if source:
+    text = source.read_text()
+    text = re.sub(r"^package\s+[^\s;]+\s*;?\s*$", f"package {pkg}", text, count=1, flags=re.MULTILINE)
+    target_dir.mkdir(parents=True, exist_ok=True)
+    target.write_text(text)
+    if source.resolve() != target.resolve():
+        source.unlink()
+    print(f"Moved MainActivity to {target}")
+else:
+    print("Warning: MainActivity source not found")
+PY
+
 python3 - "$APP_LABEL" <<'PY'
 import re
 import sys
