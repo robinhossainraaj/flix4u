@@ -25,6 +25,26 @@ const PUBLIC_GUEST_MODE = true;
 
 ## What is implemented
 
+### MovieBox-inspired UI pass
+
+- Animated branded **splash screen** before Home.
+- Five-bottom-tab layout: **Home / Search / Library / Downloads / Settings**.
+- Home now has a MovieBox-style **top category strip**:
+  Trending / Movies / Web Series / Anime / Free.
+- Auto-sliding **hero banner carousel** with Play and Details buttons.
+- Multiple horizontal **content rails** with See all navigation.
+- Dedicated category pages with:
+  - hero banner
+  - genre filter chips
+  - in-category search
+  - sort by popular / A-Z / newest / rating
+  - responsive poster grid
+- Redesigned poster cards with type badge, rating badge, and metadata line.
+- Redesigned detail page with backdrop hero, episode chips, and saved-state buttons.
+- Redesigned search with type chips and locally stored recent searches.
+- Redesigned library, downloads, and settings pages.
+- Diversified public catalog rails from Archive.org and AniList.
+
 ### Backend (`flix4u-backend/`)
 
 - Guest-only fork of the KuroStream backend.
@@ -125,6 +145,24 @@ FLIX4U_BACKEND_URL=https://your-project.vercel.app ./bootstrap_android.sh
 
 - Anime playback, because it depends on the inherited resolver and AniZip mapping
 - Any private/custom stream adapter you add later
+
+## Latest test APK
+
+```txt
+/sdcard/GenAi/Flix4U-release.apk
+```
+
+SHA-256:
+
+```txt
+3dd64b4853dbccb77f72fc74c274c88233dca5bca00c1557616e24b54a872d88
+```
+
+Build run:
+
+```txt
+https://github.com/robinhossainraaj/flix4u/actions/runs/45619327950
+```
 
 ## Legal note
 
