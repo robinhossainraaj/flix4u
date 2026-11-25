@@ -9,6 +9,7 @@ import '../../data/models/media_item.dart';
 import '../../data/repositories/catalog_repository.dart';
 import '../../data/repositories/stream_repository.dart';
 import '../../theme/app_theme.dart';
+import '../../widgets/app_back_button.dart';
 
 class DetailPage extends StatefulWidget {
   const DetailPage({super.key, required this.type, required this.id});
@@ -128,6 +129,7 @@ class _DetailPageState extends State<DetailPage> {
               SliverAppBar(
                 expandedHeight: 300,
                 pinned: true,
+                leading: const AppBackButton(),
                 flexibleSpace: FlexibleSpaceBar(
                   title: Text(
                     item.title,
@@ -413,7 +415,7 @@ class _BackdropGradient extends StatelessWidget {
     return const DecoratedBox(
       decoration: BoxDecoration(
         gradient: LinearGradient(
-          colors: <Color>[Color(0xFF4C1D95), Color(0xFF0F172A)],
+          colors: <Color>[AppColors.surfaceAlt, AppColors.deepest],
         ),
       ),
     );

@@ -1,10 +1,11 @@
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
-import 'package:go_router/go_router.dart';
 
+import '../../core/playback/play_media.dart';
 import '../../data/models/media_item.dart';
 import '../../data/repositories/catalog_repository.dart';
 import '../../theme/app_theme.dart';
+import '../../widgets/app_back_button.dart';
 import '../../widgets/media_card.dart';
 
 class CategoryPage extends StatefulWidget {
@@ -163,8 +164,8 @@ class _CategoryPageState extends State<CategoryPage> {
     return result;
   }
 
-  void _openDetail(MediaItem item) {
-    context.go('/detail/${item.type}/${Uri.encodeComponent(item.id)}');
+  void _play(MediaItem item) {
+    playMedia(context, item);
   }
 
   @override
@@ -195,6 +196,7 @@ class _CategoryPageState extends State<CategoryPage> {
               SliverAppBar(
                 expandedHeight: 250,
                 pinned: true,
+                leading: const AppBackButton(),
                 flexibleSpace: FlexibleSpaceBar(
                   title: Text(
                     _info.title,
@@ -340,7 +342,7 @@ class _CategoryPageState extends State<CategoryPage> {
                         item: item,
                         width: 164,
                         imageHeight: 96,
-                        onTap: () => _openDetail(item),
+                        onTap: () => _play(item),
                       );
                     }, childCount: items.length),
                   ),
@@ -396,7 +398,7 @@ class _BannerGradient extends StatelessWidget {
     return const DecoratedBox(
       decoration: BoxDecoration(
         gradient: LinearGradient(
-          colors: <Color>[Color(0xFF244A3A), Color(0xFF101115)],
+          colors: <Color>[AppColors.surfaceAlt, AppColors.deepest],
         ),
       ),
     );

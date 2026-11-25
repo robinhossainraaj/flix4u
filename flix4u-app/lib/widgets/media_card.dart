@@ -10,7 +10,7 @@ class MediaCard extends StatelessWidget {
     required this.item,
     this.onTap,
     this.width = 168,
-    this.imageHeight = 98,
+    this.imageHeight = 96,
   });
 
   final MediaItem item;
@@ -22,19 +22,26 @@ class MediaCard extends StatelessWidget {
   Widget build(BuildContext context) {
     return SizedBox(
       width: width,
-      child: InkWell(
-        onTap: onTap,
-        borderRadius: BorderRadius.circular(10),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          mainAxisSize: MainAxisSize.min,
-          children: <Widget>[
-            Stack(
-              children: <Widget>[
-                ClipRRect(
-                  borderRadius: BorderRadius.circular(10),
-                  child: item.poster.isNotEmpty
-                      ? CachedNetworkImage(
+      child: Material(
+        color: Colors.transparent,
+        child: InkWell(
+          onTap: onTap,
+          borderRadius: BorderRadius.circular(12),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            mainAxisSize: MainAxisSize.min,
+            children: <Widget>[
+              Container(
+                decoration: BoxDecoration(
+                  borderRadius: BorderRadius.circular(12),
+                  border: Border.all(color: AppColors.surfaceAlt),
+                ),
+                child: ClipRRect(
+                  borderRadius: BorderRadius.circular(11),
+                  child: Stack(
+                    children: <Widget>[
+                      if (item.poster.isNotEmpty)
+                        CachedNetworkImage(
                           imageUrl: item.poster,
                           height: imageHeight,
                           width: width,
@@ -44,86 +51,110 @@ class MediaCard extends StatelessWidget {
                           errorWidget: (_, __, ___) =>
                               _ThumbPlaceholder(height: imageHeight),
                         )
-                      : _ThumbPlaceholder(height: imageHeight),
-                ),
-                Positioned(
-                  left: 7,
-                  bottom: 7,
-                  child: Container(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 6,
-                      vertical: 3,
-                    ),
-                    decoration: BoxDecoration(
-                      color: Colors.black.withOpacity(0.72),
-                      borderRadius: BorderRadius.circular(5),
-                    ),
-                    child: Text(
-                      _typeLabel(),
-                      style: const TextStyle(
-                        color: Colors.white,
-                        fontSize: 9,
-                        fontWeight: FontWeight.w800,
-                        letterSpacing: 0.4,
-                      ),
-                    ),
-                  ),
-                ),
-                if (item.rating != null)
-                  Positioned(
-                    right: 7,
-                    top: 7,
-                    child: Container(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 6,
-                        vertical: 3,
-                      ),
-                      decoration: BoxDecoration(
-                        color: AppColors.primary,
-                        borderRadius: BorderRadius.circular(5),
-                      ),
-                      child: Row(
-                        mainAxisSize: MainAxisSize.min,
-                        children: <Widget>[
-                          const Icon(
-                            Icons.star_rounded,
-                            size: 10,
-                            color: Color(0xFF062315),
-                          ),
-                          const SizedBox(width: 2),
-                          Text(
-                            item.rating!.toStringAsFixed(1),
-                            style: const TextStyle(
-                              color: Color(0xFF062315),
-                              fontSize: 10,
-                              fontWeight: FontWeight.w800,
+                      else
+                        _ThumbPlaceholder(height: imageHeight),
+                      const Positioned.fill(
+                        child: DecoratedBox(
+                          decoration: BoxDecoration(
+                            gradient: LinearGradient(
+                              begin: Alignment.topCenter,
+                              end: Alignment.bottomCenter,
+                              colors: <Color>[
+                                Colors.transparent,
+                                Color(0x99061418),
+                              ],
+                              stops: <double>[0.55, 1.0],
                             ),
                           ),
-                        ],
+                        ),
                       ),
-                    ),
+                      Positioned(
+                        left: 7,
+                        bottom: 7,
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 6,
+                            vertical: 3,
+                          ),
+                          decoration: BoxDecoration(
+                            color: const Color(0xCC061418),
+                            borderRadius: BorderRadius.circular(5),
+                            border: Border.all(color: Colors.white12),
+                          ),
+                          child: Text(
+                            _typeLabel(),
+                            style: const TextStyle(
+                              color: AppColors.text,
+                              fontSize: 8.5,
+                              fontWeight: FontWeight.w800,
+                              letterSpacing: 0.5,
+                            ),
+                          ),
+                        ),
+                      ),
+                      if (item.rating != null)
+                        Positioned(
+                          right: 7,
+                          top: 7,
+                          child: Container(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 6,
+                              vertical: 3,
+                            ),
+                            decoration: BoxDecoration(
+                              color: AppColors.primary,
+                              borderRadius: BorderRadius.circular(6),
+                            ),
+                            child: Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: <Widget>[
+                                const Icon(
+                                  Icons.star_rounded,
+                                  size: 10,
+                                  color: AppColors.onPrimary,
+                                ),
+                                const SizedBox(width: 2),
+                                Text(
+                                  item.rating!.toStringAsFixed(1),
+                                  style: const TextStyle(
+                                    color: AppColors.onPrimary,
+                                    fontSize: 10,
+                                    fontWeight: FontWeight.w800,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ),
+                    ],
                   ),
-              ],
-            ),
-            const SizedBox(height: 7),
-            Text(
-              item.title,
-              maxLines: 2,
-              overflow: TextOverflow.ellipsis,
-              style: const TextStyle(
-                color: AppColors.text,
-                fontSize: 13,
-                fontWeight: FontWeight.w700,
+                ),
               ),
-            ),
-            const SizedBox(height: 2),
-            Text(
-              _metaLine(),
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
-              style: const TextStyle(color: AppColors.muted, fontSize: 10),
-            ),
-          ],
+              const SizedBox(height: 7),
+              Text(
+                item.title,
+                maxLines: 2,
+                overflow: TextOverflow.ellipsis,
+                style: const TextStyle(
+                  color: AppColors.text,
+                  fontSize: 13,
+                  height: 1.15,
+                  fontWeight: FontWeight.w700,
+                ),
+              ),
+              const SizedBox(height: 3),
+              Text(
+                _metaLine(),
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: const TextStyle(
+                  color: AppColors.muted,
+                  fontSize: 10,
+                  fontWeight: FontWeight.w500,
+                ),
+              ),
+            ],
+          ),
         ),
       ),
     );
@@ -161,10 +192,16 @@ class _ThumbPlaceholder extends StatelessWidget {
       width: double.infinity,
       decoration: const BoxDecoration(
         gradient: LinearGradient(
-          colors: <Color>[Color(0xFF2A2C33), Color(0xFF15161B)],
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: <Color>[AppColors.surfaceAlt, AppColors.deepest],
         ),
       ),
-      child: const Icon(Icons.movie_rounded, color: Colors.white24, size: 28),
+      child: const Icon(
+        Icons.movie_rounded,
+        color: AppColors.primaryDeep,
+        size: 26,
+      ),
     );
   }
 }

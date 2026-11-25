@@ -1,12 +1,13 @@
 import 'package:flutter/material.dart';
-import 'package:go_router/go_router.dart';
 import 'package:hive_flutter/hive_flutter.dart';
 
+import '../../core/playback/play_media.dart';
 import '../../data/models/media_item.dart';
 import '../../data/repositories/catalog_repository.dart';
 import '../../theme/app_theme.dart';
 import '../../widgets/app_bottom_nav.dart';
 import '../../widgets/media_card.dart';
+import '../../widgets/tab_pop_scope.dart';
 
 class SearchPage extends StatefulWidget {
   const SearchPage({super.key});
@@ -61,113 +62,113 @@ class _SearchPageState extends State<SearchPage> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: AppColors.background,
-      appBar: AppBar(
-        title: const Text(
-          'Search',
-          style: TextStyle(fontWeight: FontWeight.w800, fontSize: 21),
+    return TabPopScope(
+      child: Scaffold(
+        backgroundColor: AppColors.background,
+        appBar: AppBar(
+          title: const Text(
+            'Search',
+            style: TextStyle(fontWeight: FontWeight.w800, fontSize: 21),
+          ),
         ),
-      ),
-      body: SafeArea(
-        child: Column(
-          children: <Widget>[
-            Padding(
-              padding: const EdgeInsets.fromLTRB(16, 8, 16, 0),
-              child: TextField(
-                controller: _controller,
-                onSubmitted: _runSearch,
-                decoration: const InputDecoration(
-                  hintText: 'Search movies, series or anime',
-                  prefixIcon: Icon(Icons.search_rounded),
+        body: SafeArea(
+          child: Column(
+            children: <Widget>[
+              Padding(
+                padding: const EdgeInsets.fromLTRB(16, 8, 16, 0),
+                child: TextField(
+                  controller: _controller,
+                  onSubmitted: _runSearch,
+                  decoration: const InputDecoration(
+                    hintText: 'Search movies, series or anime',
+                    prefixIcon: Icon(Icons.search_rounded),
+                  ),
                 ),
               ),
-            ),
-            const SizedBox(height: 12),
-            SizedBox(
-              height: 38,
-              child: ListView.separated(
-                padding: const EdgeInsets.symmetric(horizontal: 16),
-                scrollDirection: Axis.horizontal,
-                itemCount: _types.length,
-                separatorBuilder: (_, __) => const SizedBox(width: 8),
-                itemBuilder: (context, index) {
-                  final entry = _types[index];
-                  final selected = entry.key == _type;
-                  return ChoiceChip(
-                    label: Text(entry.value),
-                    selected: selected,
-                    onSelected: (_) => setState(() => _type = entry.key),
-                    selectedColor: AppColors.primary,
-                    backgroundColor: AppColors.surfaceAlt,
-                    side: BorderSide.none,
-                    labelStyle: TextStyle(
-                      color: selected
-                          ? const Color(0xFF062315)
-                          : Colors.white70,
-                      fontWeight: FontWeight.w700,
-                    ),
-                  );
-                },
+              const SizedBox(height: 12),
+              SizedBox(
+                height: 38,
+                child: ListView.separated(
+                  padding: const EdgeInsets.symmetric(horizontal: 16),
+                  scrollDirection: Axis.horizontal,
+                  itemCount: _types.length,
+                  separatorBuilder: (_, __) => const SizedBox(width: 8),
+                  itemBuilder: (context, index) {
+                    final entry = _types[index];
+                    final selected = entry.key == _type;
+                    return ChoiceChip(
+                      label: Text(entry.value),
+                      selected: selected,
+                      onSelected: (_) => setState(() => _type = entry.key),
+                      selectedColor: AppColors.primary,
+                      backgroundColor: AppColors.surface,
+                      side: BorderSide.none,
+                      labelStyle: TextStyle(
+                        color: selected ? AppColors.onPrimary : AppColors.muted,
+                        fontWeight: FontWeight.w700,
+                      ),
+                    );
+                  },
+                ),
               ),
-            ),
-            const SizedBox(height: 8),
-            Expanded(
-              child: _future == null
-                  ? _suggestions()
-                  : FutureBuilder<List<MediaItem>>(
-                      future: _future,
-                      builder: (context, snapshot) {
-                        if (snapshot.connectionState ==
-                            ConnectionState.waiting) {
-                          return const Center(
-                            child: CircularProgressIndicator(),
-                          );
-                        }
-                        if (snapshot.hasError) {
-                          return Center(
-                            child: Padding(
-                              padding: const EdgeInsets.all(24),
-                              child: Text(
-                                'Search failed: ${snapshot.error}',
-                                textAlign: TextAlign.center,
-                              ),
-                            ),
-                          );
-                        }
-                        final items = snapshot.data ?? const <MediaItem>[];
-                        if (items.isEmpty) {
-                          return const Center(child: Text('No results found.'));
-                        }
-                        return GridView.builder(
-                          padding: const EdgeInsets.fromLTRB(16, 8, 16, 16),
-                          gridDelegate:
-                              const SliverGridDelegateWithFixedCrossAxisCount(
-                                crossAxisCount: 2,
-                                crossAxisSpacing: 12,
-                                mainAxisSpacing: 14,
-                                childAspectRatio: 1.02,
-                              ),
-                          itemCount: items.length,
-                          itemBuilder: (context, index) {
-                            final item = items[index];
-                            return MediaCard(
-                              item: item,
-                              width: 164,
-                              imageHeight: 96,
-                              onTap: () => context.go(
-                                '/detail/${item.type}/${Uri.encodeComponent(item.id)}',
+              const SizedBox(height: 8),
+              Expanded(
+                child: _future == null
+                    ? _suggestions()
+                    : FutureBuilder<List<MediaItem>>(
+                        future: _future,
+                        builder: (context, snapshot) {
+                          if (snapshot.connectionState ==
+                              ConnectionState.waiting) {
+                            return const Center(
+                              child: CircularProgressIndicator(),
+                            );
+                          }
+                          if (snapshot.hasError) {
+                            return Center(
+                              child: Padding(
+                                padding: const EdgeInsets.all(24),
+                                child: Text(
+                                  'Search failed: ${snapshot.error}',
+                                  textAlign: TextAlign.center,
+                                ),
                               ),
                             );
-                          },
-                        );
-                      },
-                    ),
-            ),
-          ],
+                          }
+                          final items = snapshot.data ?? const <MediaItem>[];
+                          if (items.isEmpty) {
+                            return const Center(
+                              child: Text('No results found.'),
+                            );
+                          }
+                          return GridView.builder(
+                            padding: const EdgeInsets.fromLTRB(16, 8, 16, 16),
+                            gridDelegate:
+                                const SliverGridDelegateWithFixedCrossAxisCount(
+                                  crossAxisCount: 2,
+                                  crossAxisSpacing: 12,
+                                  mainAxisSpacing: 14,
+                                  childAspectRatio: 1.02,
+                                ),
+                            itemCount: items.length,
+                            itemBuilder: (context, index) {
+                              final item = items[index];
+                              return MediaCard(
+                                item: item,
+                                width: 164,
+                                imageHeight: 96,
+                                onTap: () => playMedia(context, item),
+                              );
+                            },
+                          );
+                        },
+                      ),
+              ),
+            ],
+          ),
         ),
+        bottomNavigationBar: const AppBottomNav(selectedIndex: 1),
       ),
-      bottomNavigationBar: const AppBottomNav(selectedIndex: 1),
     );
   }
 
@@ -182,7 +183,7 @@ class _SearchPageState extends State<SearchPage> {
           decoration: BoxDecoration(
             borderRadius: BorderRadius.circular(18),
             gradient: const LinearGradient(
-              colors: <Color>[Color(0xFF3B1D73), Color(0xFF111827)],
+              colors: <Color>[AppColors.surfaceAlt, AppColors.surface],
             ),
           ),
           child: const Column(

@@ -1,12 +1,12 @@
 import 'dart:convert';
 
 import 'package:flutter/material.dart';
-import 'package:go_router/go_router.dart';
 import 'package:hive_flutter/hive_flutter.dart';
 
+import '../../core/playback/play_media.dart';
 import '../../data/models/media_item.dart';
 import '../../theme/app_theme.dart';
-import '../../widgets/app_bottom_nav.dart';
+import '../../widgets/app_back_button.dart';
 import '../../widgets/section_rail.dart';
 
 class LibraryPage extends StatelessWidget {
@@ -27,15 +27,12 @@ class LibraryPage extends StatelessWidget {
     return items;
   }
 
-  void _openDetail(BuildContext context, MediaItem item) {
-    context.go('/detail/${item.type}/${Uri.encodeComponent(item.id)}');
-  }
-
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: AppColors.background,
       appBar: AppBar(
+        leading: const AppBackButton(fallback: '/me'),
         title: const Text(
           'My Library',
           style: TextStyle(fontWeight: FontWeight.w800, fontSize: 21),
@@ -61,8 +58,14 @@ class LibraryPage extends StatelessWidget {
                     padding: const EdgeInsets.all(18),
                     decoration: BoxDecoration(
                       borderRadius: BorderRadius.circular(18),
+                      border: Border.all(color: AppColors.surfaceAlt),
                       gradient: const LinearGradient(
-                        colors: <Color>[Color(0xFF244A3A), Color(0xFF101115)],
+                        begin: Alignment.topLeft,
+                        end: Alignment.bottomRight,
+                        colors: <Color>[
+                          AppColors.surfaceAlt,
+                          AppColors.surface,
+                        ],
                       ),
                     ),
                     child: const Row(
@@ -70,7 +73,7 @@ class LibraryPage extends StatelessWidget {
                         Icon(
                           Icons.bookmark_rounded,
                           size: 38,
-                          color: Colors.white70,
+                          color: AppColors.primaryDeep,
                         ),
                         SizedBox(width: 14),
                         Expanded(
@@ -80,7 +83,7 @@ class LibraryPage extends StatelessWidget {
                               Text(
                                 'Saved on this device',
                                 style: TextStyle(
-                                  color: Colors.white,
+                                  color: AppColors.text,
                                   fontWeight: FontWeight.w800,
                                   fontSize: 16,
                                 ),
@@ -89,7 +92,7 @@ class LibraryPage extends StatelessWidget {
                               Text(
                                 'No account needed. Your list stays private.',
                                 style: TextStyle(
-                                  color: Colors.white70,
+                                  color: AppColors.muted,
                                   fontSize: 12,
                                 ),
                               ),
@@ -110,23 +113,23 @@ class LibraryPage extends StatelessWidget {
                       child: Column(
                         mainAxisSize: MainAxisSize.min,
                         children: <Widget>[
-                          Icon(
+                          const Icon(
                             Icons.bookmark_border,
                             size: 72,
-                            color: Colors.white24,
+                            color: AppColors.brand,
                           ),
                           const SizedBox(height: 14),
                           const Text(
                             'Your library is empty',
                             style: TextStyle(
-                              color: Colors.white,
+                              color: AppColors.text,
                               fontSize: 17,
                               fontWeight: FontWeight.w700,
                             ),
                           ),
                           const SizedBox(height: 6),
                           const Text(
-                            'Tap the heart or bookmark on a title to save it here.',
+                            'Play a title and it will appear in Continue watching.',
                             textAlign: TextAlign.center,
                             style: TextStyle(color: AppColors.muted),
                           ),
@@ -138,10 +141,10 @@ class LibraryPage extends StatelessWidget {
               else ...<Widget>[
                 SliverToBoxAdapter(
                   child: SectionRail(
-                    title: 'Continue Watching',
+                    title: 'Continue watching',
                     subtitle: 'Jump back in',
                     items: sections['continueWatching']!,
-                    onTap: (item) => _openDetail(context, item),
+                    onTap: (item) => playMedia(context, item),
                   ),
                 ),
                 SliverToBoxAdapter(
@@ -149,7 +152,7 @@ class LibraryPage extends StatelessWidget {
                     title: 'Favorites',
                     subtitle: 'Titles you loved',
                     items: sections['favorites']!,
-                    onTap: (item) => _openDetail(context, item),
+                    onTap: (item) => playMedia(context, item),
                   ),
                 ),
                 SliverToBoxAdapter(
@@ -157,7 +160,7 @@ class LibraryPage extends StatelessWidget {
                     title: 'Watchlist',
                     subtitle: 'Plan your next watch',
                     items: sections['watchlist']!,
-                    onTap: (item) => _openDetail(context, item),
+                    onTap: (item) => playMedia(context, item),
                   ),
                 ),
                 const SliverToBoxAdapter(child: SizedBox(height: 28)),
@@ -166,7 +169,6 @@ class LibraryPage extends StatelessWidget {
           );
         },
       ),
-      bottomNavigationBar: const AppBottomNav(selectedIndex: 3),
     );
   }
 }

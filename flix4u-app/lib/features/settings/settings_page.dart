@@ -4,7 +4,7 @@ import 'package:package_info_plus/package_info_plus.dart';
 
 import '../../core/api/endpoints.dart';
 import '../../theme/app_theme.dart';
-import '../../widgets/app_bottom_nav.dart';
+import '../../widgets/app_back_button.dart';
 
 class SettingsPage extends StatefulWidget {
   const SettingsPage({super.key});
@@ -41,6 +41,7 @@ class _SettingsPageState extends State<SettingsPage> {
     return Scaffold(
       backgroundColor: AppColors.background,
       appBar: AppBar(
+        leading: const AppBackButton(fallback: '/me'),
         title: const Text(
           'Settings',
           style: TextStyle(fontWeight: FontWeight.w800, fontSize: 21),
@@ -53,13 +54,20 @@ class _SettingsPageState extends State<SettingsPage> {
             padding: const EdgeInsets.all(18),
             decoration: BoxDecoration(
               borderRadius: BorderRadius.circular(18),
+              border: Border.all(color: AppColors.surfaceAlt),
               gradient: const LinearGradient(
-                colors: <Color>[Color(0xFF244A3A), Color(0xFF101115)],
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+                colors: <Color>[AppColors.surfaceAlt, AppColors.surface],
               ),
             ),
             child: const Row(
               children: <Widget>[
-                Icon(Icons.person_off_rounded, size: 38, color: Colors.white70),
+                Icon(
+                  Icons.person_off_rounded,
+                  size: 38,
+                  color: AppColors.primaryDeep,
+                ),
                 SizedBox(width: 14),
                 Expanded(
                   child: Column(
@@ -68,7 +76,7 @@ class _SettingsPageState extends State<SettingsPage> {
                       Text(
                         'Guest mode',
                         style: TextStyle(
-                          color: Colors.white,
+                          color: AppColors.text,
                           fontWeight: FontWeight.w800,
                           fontSize: 17,
                         ),
@@ -76,7 +84,7 @@ class _SettingsPageState extends State<SettingsPage> {
                       SizedBox(height: 4),
                       Text(
                         'No login, no Firebase, no account required.',
-                        style: TextStyle(color: Colors.white70, fontSize: 12),
+                        style: TextStyle(color: AppColors.muted, fontSize: 12),
                       ),
                     ],
                   ),
@@ -106,7 +114,7 @@ class _SettingsPageState extends State<SettingsPage> {
           ),
           const SizedBox(height: 20),
           const Card(
-            color: AppColors.surfaceAlt,
+            color: AppColors.surface,
             child: Padding(
               padding: EdgeInsets.all(16),
               child: Text(
@@ -118,7 +126,6 @@ class _SettingsPageState extends State<SettingsPage> {
           ),
         ],
       ),
-      bottomNavigationBar: const AppBottomNav(selectedIndex: 3),
     );
   }
 
@@ -128,10 +135,10 @@ class _SettingsPageState extends State<SettingsPage> {
       child: Text(
         title,
         style: const TextStyle(
-          color: AppColors.primary,
-          fontSize: 12,
+          color: AppColors.primaryDeep,
+          fontSize: 11,
           fontWeight: FontWeight.w800,
-          letterSpacing: 1,
+          letterSpacing: 1.2,
         ),
       ),
     );
@@ -143,7 +150,7 @@ class _SettingsPageState extends State<SettingsPage> {
     required String subtitle,
   }) {
     return ListTile(
-      leading: Icon(icon),
+      leading: Icon(icon, color: AppColors.primaryDeep),
       title: Text(title),
       subtitle: Text(subtitle, maxLines: 1, overflow: TextOverflow.ellipsis),
     );

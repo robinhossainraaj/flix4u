@@ -56,9 +56,9 @@ class _SplashPageState extends State<SplashPage>
                 begin: Alignment.topLeft,
                 end: Alignment.bottomRight,
                 colors: <Color>[
-                  Color(0xFF08120E),
-                  Color(0xFF111A17),
-                  Color(0xFF08090B),
+                  AppColors.deepest,
+                  AppColors.background,
+                  Color(0xFF061418),
                 ],
               ),
             ),

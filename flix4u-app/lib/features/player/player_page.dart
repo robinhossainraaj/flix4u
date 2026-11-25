@@ -2,6 +2,9 @@ import 'package:chewie/chewie.dart';
 import 'package:flutter/material.dart';
 import 'package:video_player/video_player.dart';
 
+import '../../theme/app_theme.dart';
+import '../../widgets/app_back_button.dart';
+
 class PlayerPage extends StatefulWidget {
   const PlayerPage({
     super.key,
@@ -66,10 +69,10 @@ class _PlayerPageState extends State<PlayerPage> {
           allowMuting: true,
           showControls: true,
           materialProgressColors: ChewieProgressColors(
-            playedColor: const Color(0xFF7C4DFF),
-            bufferedColor: Colors.white30,
-            handleColor: const Color(0xFF7C4DFF),
-            backgroundColor: Colors.white12,
+            playedColor: AppColors.primary,
+            bufferedColor: AppColors.surfaceAlt,
+            handleColor: AppColors.primary,
+            backgroundColor: AppColors.surface,
           ),
           errorBuilder: (context, message) => Center(
             child: Padding(
@@ -95,7 +98,12 @@ class _PlayerPageState extends State<PlayerPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: Text(widget.title)),
+      backgroundColor: Colors.black,
+      appBar: AppBar(
+        backgroundColor: Colors.black,
+        leading: const AppBackButton(),
+        title: Text(widget.title),
+      ),
       body: _error != null
           ? Center(
               child: Padding(

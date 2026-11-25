@@ -33,15 +33,6 @@ class SectionRail extends StatelessWidget {
             padding: const EdgeInsets.symmetric(horizontal: 16),
             child: Row(
               children: <Widget>[
-                Container(
-                  width: 4,
-                  height: 22,
-                  decoration: BoxDecoration(
-                    color: AppColors.primary,
-                    borderRadius: BorderRadius.circular(4),
-                  ),
-                ),
-                const SizedBox(width: 10),
                 Expanded(
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
@@ -49,17 +40,21 @@ class SectionRail extends StatelessWidget {
                       Text(
                         title,
                         style: const TextStyle(
-                          color: Colors.white,
-                          fontSize: 17,
+                          color: AppColors.text,
+                          fontSize: 18,
                           fontWeight: FontWeight.w800,
+                          letterSpacing: -0.2,
                         ),
                       ),
                       if (subtitle != null)
                         Text(
                           subtitle!,
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
                           style: const TextStyle(
                             color: AppColors.muted,
-                            fontSize: 11,
+                            fontSize: 10.5,
+                            fontWeight: FontWeight.w500,
                           ),
                         ),
                     ],
@@ -69,14 +64,22 @@ class SectionRail extends StatelessWidget {
                   TextButton(
                     onPressed: onSeeAll,
                     style: TextButton.styleFrom(
-                      foregroundColor: AppColors.accent,
+                      foregroundColor: AppColors.primaryDeep,
                       padding: const EdgeInsets.symmetric(horizontal: 8),
+                      minimumSize: const Size(0, 34),
+                      tapTargetSize: MaterialTapTargetSize.shrinkWrap,
                     ),
                     child: const Row(
                       mainAxisSize: MainAxisSize.min,
                       children: <Widget>[
-                        Text('All'),
-                        Icon(Icons.chevron_right, size: 16),
+                        Text(
+                          'All',
+                          style: TextStyle(
+                            fontSize: 12,
+                            fontWeight: FontWeight.w700,
+                          ),
+                        ),
+                        Icon(Icons.chevron_right_rounded, size: 17),
                       ],
                     ),
                   ),
@@ -89,6 +92,7 @@ class SectionRail extends StatelessWidget {
             child: ListView.separated(
               padding: const EdgeInsets.symmetric(horizontal: 16),
               scrollDirection: Axis.horizontal,
+              physics: const BouncingScrollPhysics(),
               itemCount: items.length,
               separatorBuilder: (_, __) => const SizedBox(width: 12),
               itemBuilder: (context, index) {
