@@ -25,21 +25,27 @@ const PUBLIC_GUEST_MODE = true;
 
 ## What is implemented
 
-### MovieBox-inspired UI pass
+### Step 1 — MovieBox-inspired UI pass
 
+- Verified design with 8 real MovieBox screenshots saved in `/sdcard/GenAi/reference/`.
+- Extracted from screenshots:
+  - background `#101115`
+  - surfaces `#1E1F23` / `#28292E`
+  - mint accent `#77F395`
+  - off-white text `#F2EEEF`
+  - landscape 16:9 cards with title and metadata below
+  - bottom tabs `Home / ShortTV / Downloads / Me`
+- Design spec written to `MOVIEBOX_UI_SPEC.md`.
 - Animated branded **splash screen** before Home.
-- Five-bottom-tab layout: **Home / Search / Library / Downloads / Settings**.
-- Home now has a MovieBox-style **top category strip**:
+- Four-bottom-tab layout: **Home / Search / Downloads / Me**.
+- New **Me** page with Watch History, My List, TV Download & Web Link, Settings, and About.
+- Home top category strip:
   Trending / Movies / Web Series / Anime / Free.
 - Auto-sliding **hero banner carousel** with Play and Details buttons.
-- Multiple horizontal **content rails** with See all navigation.
-- Dedicated category pages with:
-  - hero banner
-  - genre filter chips
-  - in-category search
-  - sort by popular / A-Z / newest / rating
-  - responsive poster grid
-- Redesigned poster cards with type badge, rating badge, and metadata line.
+- Local **Continue Watching** rail on Home.
+- Multiple horizontal **content rails** with `All >` navigation.
+- Category and search grids now use **landscape cards**.
+- Redesigned poster cards with type badge, green rating badge, and metadata line.
 - Redesigned detail page with backdrop hero, episode chips, and saved-state buttons.
 - Redesigned search with type chips and locally stored recent searches.
 - Redesigned library, downloads, and settings pages.
@@ -155,13 +161,13 @@ FLIX4U_BACKEND_URL=https://your-project.vercel.app ./bootstrap_android.sh
 SHA-256:
 
 ```txt
-3dd64b4853dbccb77f72fc74c274c88233dca5bca00c1557616e24b54a872d88
+fbfcd76ee16758bb452d44f637c6c50b746880ce491e9440e42fcaa4f116be1d
 ```
 
 Build run:
 
 ```txt
-https://github.com/robinhossainraaj/flix4u/actions/runs/45619327950
+https://github.com/robinhossainraaj/flix4u/actions/runs/45623655739
 ```
 
 ## Legal note
