@@ -94,12 +94,67 @@ for folder in android_icons/mipmap-*; do
   cp "$folder"/*.png "$target"/
 done
 
-# Some Flutter templates define the adaptive icon background in colors.xml.
+# Flix4U palette. Keep the native launch screen, status bar and navigation bar
+# in the same dark blue as the Flutter app instead of the default white bars.
 mkdir -p android/app/src/main/res/values
-cat > android/app/src/main/res/values/ic_launcher_background.xml <<'XML'
+mkdir -p android/app/src/main/res/values-night
+mkdir -p android/app/src/main/res/values-v23
+mkdir -p android/app/src/main/res/values-v27
+rm -f android/app/src/main/res/values/ic_launcher_background.xml
+cat > android/app/src/main/res/values/colors.xml <<'XML'
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
+    <color name="flix4u_background">#04202E</color>
+    <color name="flix4u_surface">#0A3C55</color>
     <color name="ic_launcher_background">#0A3C55</color>
+</resources>
+XML
+cat > android/app/src/main/res/values/styles.xml <<'XML'
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <style name="Flix4UTheme" parent="@android:style/Theme.Material.NoActionBar">
+        <item name="android:windowBackground">@color/flix4u_background</item>
+        <item name="android:statusBarColor">@color/flix4u_background</item>
+        <item name="android:navigationBarColor">@color/flix4u_background</item>
+    </style>
+
+    <style name="LaunchTheme" parent="Flix4UTheme" />
+
+    <style name="NormalTheme" parent="Flix4UTheme" />
+</resources>
+XML
+cat > android/app/src/main/res/values-night/styles.xml <<'XML'
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <style name="LaunchTheme" parent="Flix4UTheme" />
+
+    <style name="NormalTheme" parent="Flix4UTheme" />
+</resources>
+XML
+cat > android/app/src/main/res/values-v23/styles.xml <<'XML'
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <style name="LaunchTheme" parent="Flix4UTheme">
+        <item name="android:windowLightStatusBar">false</item>
+    </style>
+
+    <style name="NormalTheme" parent="Flix4UTheme">
+        <item name="android:windowLightStatusBar">false</item>
+    </style>
+</resources>
+XML
+cat > android/app/src/main/res/values-v27/styles.xml <<'XML'
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <style name="LaunchTheme" parent="Flix4UTheme">
+        <item name="android:windowLightStatusBar">false</item>
+        <item name="android:windowLightNavigationBar">false</item>
+    </style>
+
+    <style name="NormalTheme" parent="Flix4UTheme">
+        <item name="android:windowLightStatusBar">false</item>
+        <item name="android:windowLightNavigationBar">false</item>
+    </style>
 </resources>
 XML
 

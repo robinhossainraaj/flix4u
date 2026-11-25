@@ -3,6 +3,15 @@ const String kBackendBaseUrl = String.fromEnvironment(
   defaultValue: 'https://your-flix4u-backend.vercel.app',
 );
 
+/// Optional self-hosted CinePro Core URL.
+///
+/// When set, TMDB-backed items can resolve streams directly from an OMSS
+/// CinePro instance before the existing public fallbacks are used.
+const String kCineproBaseUrl = String.fromEnvironment(
+  'CINEPRO_BASE_URL',
+  defaultValue: '',
+);
+
 class Endpoints {
   static const String health = '/api/health';
   static const String home = '/api/catalog/home';

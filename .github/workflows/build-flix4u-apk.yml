@@ -29,6 +29,7 @@ jobs:
         working-directory: flix4u-app
         env:
           FLIX4U_BACKEND_URL: ${{ vars.FLIX4U_BACKEND_URL || secrets.FLIX4U_BACKEND_URL || 'https://your-flix4u-backend.vercel.app' }}
+          CINEPRO_BASE_URL: ${{ vars.CINEPRO_BASE_URL || secrets.CINEPRO_BASE_URL || '' }}
         run: |
           chmod +x bootstrap_android.sh configure_android.sh
           ./bootstrap_android.sh

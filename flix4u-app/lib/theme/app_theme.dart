@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 
 /// The exact seven-step palette supplied for Flix4U.
 ///
@@ -50,6 +51,20 @@ class AppColors {
     begin: Alignment.centerLeft,
     end: Alignment.centerRight,
     colors: <Color>[step3, step2, step4],
+  );
+}
+
+/// System chrome styling shared by the native Android bootstrap and Flutter.
+class AppSystemUi {
+  const AppSystemUi._();
+
+  static const SystemUiOverlayStyle dark = SystemUiOverlayStyle(
+    statusBarColor: AppColors.background,
+    statusBarIconBrightness: Brightness.light,
+    statusBarBrightness: Brightness.dark,
+    systemNavigationBarColor: AppColors.background,
+    systemNavigationBarDividerColor: AppColors.background,
+    systemNavigationBarIconBrightness: Brightness.light,
   );
 }
 

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:go_router/go_router.dart';
 
 import 'features/category/category_page.dart';
@@ -97,6 +98,12 @@ class Flix4UApp extends StatelessWidget {
       title: 'Flix4U',
       debugShowCheckedModeBanner: false,
       theme: AppTheme.dark(),
+      builder: (BuildContext context, Widget? child) {
+        return AnnotatedRegion<SystemUiOverlayStyle>(
+          value: AppSystemUi.dark,
+          child: child ?? const SizedBox.shrink(),
+        );
+      },
       routerConfig: _router,
     );
   }

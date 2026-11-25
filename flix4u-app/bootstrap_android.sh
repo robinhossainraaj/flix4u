@@ -9,6 +9,7 @@ chmod +x configure_android.sh
 
 flutter pub get
 flutter build apk --release \
-  --dart-define=FLIX4U_BACKEND_URL="${FLIX4U_BACKEND_URL:-https://your-flix4u-backend.vercel.app}"
+  --dart-define=FLIX4U_BACKEND_URL="${FLIX4U_BACKEND_URL:-https://your-flix4u-backend.vercel.app}" \
+  --dart-define=CINEPRO_BASE_URL="${CINEPRO_BASE_URL:-}"
 
 echo "APK: build/app/outputs/flutter-apk/app-release.apk"

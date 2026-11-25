@@ -874,6 +874,14 @@ const MUNCHYROLL_CORS_PROXY_URL = (
 const ANILIST_API_URL = process.env.VITE_ANILIST_API_URL || 'https://graphql.anilist.co';
 const TMDB_API_KEY = (process.env.TMDB_API_KEY || '').trim();
 const TMDB_API_BASE = 'https://api.themoviedb.org/3';
+const CINEPRO_BASE_URL = (process.env.CINEPRO_BASE_URL || '')
+  .trim()
+  .replace(/\/+$/, '');
+const CINEPRO_ENABLED = String(process.env.CINEPRO_ENABLED || 'true').toLowerCase() !== 'false';
+const CINEPRO_TIMEOUT_MS = Math.min(
+  45000,
+  Math.max(3000, Number(process.env.CINEPRO_TIMEOUT_MS || 15000) || 15000)
+);
 const TMDB_IMAGE_BASE = 'https://image.tmdb.org/t/p';
 const ARCHIVE_API_BASE = 'https://archive.org';
 const ANIYOMI_REPO_URL =
@@ -914,6 +922,7 @@ interface CacheEntry<T> {
 const aniZipCache = new Map<number, CacheEntry<Record<string, unknown>>>();
 const aniSkipCache = new Map<string, CacheEntry<Record<string, unknown>>>();
 const audioAvailabilityCache = new Map<string, CacheEntry<Record<string, unknown>>>();
+const cineproCache = new Map<string, CacheEntry<Record<string, unknown>>>();
 const primaryUnavailableCache = new Map<
   string,
   CacheEntry<{ statusCode: number; message: string; detail?: string }>
@@ -1089,6 +1098,146 @@ async function tmdbFetch(
   );
   if (!res.ok) throw new Error(`TMDB returned HTTP ${res.status}`);
   return (await res.json()) as Record<string, unknown>;
+}
+
+function cineproConfigured(): boolean {
+  if (!CINEPRO_ENABLED || !CINEPRO_BASE_URL) return false;
+  try {
+    const url = new URL(CINEPRO_BASE_URL);
+    return url.protocol === 'http:' || url.protocol === 'https:';
+  } catch {
+    return false;
+  }
+}
+
+function parseCineproTmdbId(
+  rawId: string,
+  requestedType: string
+): { id: number; type: 'movie' | 'tv' } | null {
+  const clean = String(rawId || '').trim();
+  const prefixed = clean.match(/^tmdb:(movie|tv):(\d+)$/i);
+  if (prefixed) {
+    const id = Number(prefixed[2]);
+    if (Number.isSafeInteger(id) && id > 0) {
+      return { id, type: prefixed[1].toLowerCase() === 'tv' ? 'tv' : 'movie' };
+    }
+    return null;
+  }
+  if (/^\d+$/.test(clean)) {
+    const id = Number(clean);
+    if (Number.isSafeInteger(id) && id > 0) {
+      return { id, type: requestedType === 'tv' ? 'tv' : 'movie' };
+    }
+  }
+  return null;
+}
+
+function cineproAbsoluteUrl(raw: unknown): string {
+  const value = String(raw || '').trim();
+  if (!value) return '';
+  if (/^https?:\/\//i.test(value)) return normalizeUrl(value);
+  try {
+    return new URL(value, `${CINEPRO_BASE_URL}/`).toString();
+  } catch {
+    return '';
+  }
+}
+
+function cineproProviderName(raw: unknown): string {
+  if (!raw || typeof raw !== 'object') return '';
+  const provider = raw as Record<string, unknown>;
+  return String(provider.name || provider.id || '').trim();
+}
+
+function cineproLanguage(raw: unknown): string {
+  if (!Array.isArray(raw) || !raw.length) return 'Original';
+  const first = raw[0];
+  if (!first || typeof first !== 'object') return 'Original';
+  const track = first as Record<string, unknown>;
+  return String(track.label || track.language || 'Original').trim() || 'Original';
+}
+
+async function resolveCineproSources(
+  tmdbId: number,
+  type: 'movie' | 'tv',
+  season: number,
+  episode: number
+): Promise<Record<string, unknown> | null> {
+  if (!cineproConfigured()) return null;
+
+  const cacheKey = `${type}:${tmdbId}:${season}:${episode}`;
+  const cached = cineproCache.get(cacheKey);
+  if (cached && cached.expiresAt > Date.now()) return cached.data;
+
+  const path =
+    type === 'tv'
+      ? `/v1/tv/${tmdbId}/seasons/${season}/episodes/${episode}`
+      : `/v1/movies/${tmdbId}`;
+  const url = new URL(path, `${CINEPRO_BASE_URL}/`).toString();
+  const response = await fetchWithTimeout(
+    url,
+    {
+      headers: { Accept: 'application/json', 'User-Agent': BROWSER_UA },
+    },
+    CINEPRO_TIMEOUT_MS
+  );
+  if (!response.ok) return null;
+
+  const payload = (await response.json()) as Record<string, unknown>;
+  const rawSources = Array.isArray(payload.sources) ? payload.sources : [];
+  const sources: Array<Record<string, unknown>> = [];
+  const seen = new Set<string>();
+
+  for (const raw of rawSources) {
+    if (!raw || typeof raw !== 'object') continue;
+    const source = raw as Record<string, unknown>;
+    const streamUrl = cineproAbsoluteUrl(source.url);
+    if (!/^https?:\/\//i.test(streamUrl) || seen.has(streamUrl)) continue;
+    seen.add(streamUrl);
+
+    const provider = cineproProviderName(source.provider);
+    const quality = String(source.quality || 'Auto').trim() || 'Auto';
+    sources.push({
+      url: streamUrl,
+      quality: provider ? `${provider} · ${quality}` : quality,
+      type: String(source.type || 'hls').trim() || 'hls',
+      language: cineproLanguage(source.audioTracks),
+    });
+  }
+  if (!sources.length) return null;
+
+  const subtitles: Array<Record<string, unknown>> = [];
+  const rawSubtitles = Array.isArray(payload.subtitles) ? payload.subtitles : [];
+  for (const raw of rawSubtitles) {
+    if (!raw || typeof raw !== 'object') continue;
+    const subtitle = raw as Record<string, unknown>;
+    const subtitleUrl = cineproAbsoluteUrl(subtitle.url);
+    if (!/^https?:\/\//i.test(subtitleUrl)) continue;
+    subtitles.push({
+      url: subtitleUrl,
+      label: String(subtitle.label || 'Subtitles').trim() || 'Subtitles',
+    });
+  }
+
+  const result: Record<string, unknown> = {
+    url: sources[0].url,
+    quality: sources[0].quality,
+    type: sources[0].type,
+    referer: '',
+    provider: 'cinepro',
+    sources,
+    subtitles,
+  };
+
+  let ttl = 60 * 60 * 1000;
+  if (typeof payload.expiresAt === 'string') {
+    const expiresAt = Date.parse(payload.expiresAt);
+    if (Number.isFinite(expiresAt)) {
+      ttl = Math.min(60 * 60 * 1000, Math.max(60 * 1000, expiresAt - Date.now()));
+    }
+  }
+  cineproCache.set(cacheKey, { expiresAt: Date.now() + ttl, data: result });
+  return result;
 }
 
 const ANILIST_CATALOG_QUERY = `query ($page: Int, $perPage: Int, $search: String, $id: Int, $sort: [MediaSort]) {
@@ -3975,6 +4124,8 @@ export function createExpressApp() {
         munchyrollConsumetBase: DEFAULT_MUNCHYROLL_CONSUMET_API,
         animeWorldUpstream: ANIMEWORLD_UPSTREAM,
         anilistUrl: ANILIST_API_URL,
+        cineproBase: CINEPRO_BASE_URL,
+        cineproConfigured: cineproConfigured(),
       },
       firebaseConfigured: FIREBASE_PROJECTS.length > 0,
       firebaseProjects: FIREBASE_PROJECTS.map((p) => p.projectId),
@@ -6925,7 +7076,34 @@ export function createExpressApp() {
   app.get('/api/stream/resolve', async (req: Request, res: Response) => {
     const rawId = typeof req.query.id === 'string' ? req.query.id : '';
     const type = typeof req.query.type === 'string' ? req.query.type : 'movie';
-    const episode = Math.max(1, Number(req.query.episode || 1));
+    const episode = Math.max(1, Math.floor(Number(req.query.episode || 1) || 1));
+    const season = Math.max(
+      1,
+      Math.min(99, Math.floor(Number(req.query.season || 1) || 1))
+    );
+
+    if (type !== 'anime') {
+      const parsedTmdb = parseCineproTmdbId(rawId, type);
+      if (parsedTmdb) {
+        try {
+          const cinepro = await resolveCineproSources(
+            parsedTmdb.id,
+            parsedTmdb.type,
+            season,
+            episode
+          );
+          if (cinepro) {
+            res.json(cinepro);
+            return;
+          }
+        } catch (error) {
+          console.warn(
+            `[CinePro] resolve failed for ${parsedTmdb.type}:${parsedTmdb.id}: ` +
+              (error instanceof Error ? error.message : 'unknown error')
+          );
+        }
+      }
+    }
 
     if (rawId.startsWith('archive:')) {
       try {
