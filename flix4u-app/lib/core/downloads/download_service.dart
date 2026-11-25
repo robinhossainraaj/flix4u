@@ -209,7 +209,7 @@ class DownloadService {
     _tokens[id] = token;
     var lastPercent = -1;
     try {
-      await _dio.download<void>(
+      await _dio.download(
         option.url,
         path,
         cancelToken: token,

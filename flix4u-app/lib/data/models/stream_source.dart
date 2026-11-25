@@ -100,7 +100,7 @@ class StreamOption {
 }
 
 class StreamSource {
-  const StreamSource({
+  StreamSource({
     required this.url,
     required this.quality,
     required this.type,

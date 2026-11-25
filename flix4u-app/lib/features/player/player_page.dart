@@ -534,7 +534,7 @@ class _PlayerPageState extends State<PlayerPage> {
                 ),
               ),
               InkWell(
-                onPressed: () => context.push(
+                onTap: () => context.push(
                   '/detail/${_media.type}/${Uri.encodeComponent(_media.id)}',
                 ),
                 child: const Row(

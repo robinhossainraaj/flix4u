@@ -249,7 +249,7 @@ class _SearchPageState extends State<SearchPage> {
             const Spacer(),
             if (recent.isNotEmpty)
               InkWell(
-                onPressed: () => _settings.delete('recentSearches'),
+                onTap: () => _settings.delete('recentSearches'),
                 child: const Row(
                   children: <Widget>[
                     Icon(
