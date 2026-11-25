@@ -77,6 +77,7 @@ query ($page: Int, $perPage: Int, $search: String, $id: Int, $sort: [MediaSort])
     String type, {
     int page = 1,
     int rows = 12,
+    String sort = 'downloads desc',
   }) async {
     final mediatype = type == 'tv' ? 'tv' : 'movies';
     final safeQuery = query.trim().replaceAll(RegExp(r'["\\]'), ' ');
@@ -97,7 +98,7 @@ query ($page: Int, $perPage: Int, $search: String, $id: Int, $sort: [MediaSort])
         'rows': rows,
         'page': page,
         'output': 'json',
-        'sort[]': 'downloads desc',
+        'sort[]': sort,
       },
     );
     final docs =
@@ -165,19 +166,36 @@ query ($page: Int, $perPage: Int, $search: String, $id: Int, $sort: [MediaSort])
   }
 
   Future<Map<String, dynamic>> home() async {
+    Future<List<Map<String, dynamic>>> safe(
+      Future<List<Map<String, dynamic>>> Function() job,
+    ) {
+      return job().catchError((_) => <Map<String, dynamic>>[]);
+    }
+
     final jobs = await Future.wait([
-      archiveSearch('', 'movie').catchError((_) => <Map<String, dynamic>>[]),
-      archiveSearch('', 'tv').catchError((_) => <Map<String, dynamic>>[]),
-      anilist(sort: const <String>['TRENDING_DESC'])
-          .catchError((_) => <Map<String, dynamic>>[]),
+      safe(() => archiveSearch('', 'movie', rows: 16)),
+      safe(
+        () => archiveSearch('classic OR vintage OR silent', 'movie', rows: 16),
+      ),
+      safe(
+        () => archiveSearch('adventure OR action OR comedy', 'movie', rows: 16),
+      ),
+      safe(() => archiveSearch('', 'tv', rows: 16)),
+      safe(() => archiveSearch('series OR documentary', 'tv', rows: 16)),
+      safe(() => anilist(perPage: 16, sort: const <String>['TRENDING_DESC'])),
+      safe(() => anilist(perPage: 16, sort: const <String>['POPULARITY_DESC'])),
     ]);
     return <String, dynamic>{
       'trending': jobs[0],
-      'movies': jobs[0],
-      'webSeries': jobs[1],
-      'anime': jobs[2],
       'freeMovies': jobs[0],
-      'classicSeries': jobs[1],
+      'classicMovies': jobs[1],
+      'adventure': jobs[2],
+      'movies': jobs[2],
+      'webSeries': jobs[3],
+      'classicSeries': jobs[4],
+      'documentarySeries': jobs[4],
+      'anime': jobs[5],
+      'popularAnime': jobs[6],
     };
   }
 

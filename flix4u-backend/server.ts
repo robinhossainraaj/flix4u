@@ -1224,7 +1224,8 @@ async function archiveSearch(
   query: string,
   type: 'movie' | 'tv',
   page = 1,
-  rows = 12
+  rows = 12,
+  sort = 'downloads desc'
 ): Promise<Array<Record<string, unknown>>> {
   const mediatype = type === 'tv' ? 'tv' : 'movies';
   const safeQuery = query.trim().replace(/["\\]/g, ' ');
@@ -1241,7 +1242,7 @@ async function archiveSearch(
   params.append('rows', String(rows));
   params.append('page', String(page));
   params.append('output', 'json');
-  params.append('sort', 'downloads desc');
+  params.append('sort', sort);
 
   const res = await fetchWithTimeout(
     `${ARCHIVE_API_BASE}/advancedsearch.php?${params.toString()}`,
@@ -6811,12 +6812,21 @@ export function createExpressApp() {
   // Public Flix4U catalog. No auth, no user state, no Firebase.
   app.get('/api/catalog/home', async (_req: Request, res: Response) => {
     const jobs: Array<[string, Promise<Array<Record<string, unknown>>>]> = [
-      ['trending', archiveSearch('', 'movie', 1, 12)],
+      ['trending', archiveSearch('', 'movie', 1, 16)],
+      ['freeMovies', archiveSearch('', 'movie', 1, 16)],
+      ['classicMovies', archiveSearch('classic OR vintage OR silent', 'movie', 1, 16)],
+      ['adventure', archiveSearch('adventure OR action OR comedy', 'movie', 1, 16)],
       ['movies', catalogTrending('movie', 1)],
       ['webSeries', catalogTrending('tv', 1)],
+      ['classicSeries', archiveSearch('', 'tv', 1, 16)],
+      ['documentarySeries', archiveSearch('series OR documentary', 'tv', 1, 16)],
       ['anime', catalogTrending('anime', 1)],
-      ['freeMovies', archiveSearch('', 'movie', 1, 12)],
-      ['classicSeries', archiveSearch('', 'tv', 1, 12)],
+      [
+        'popularAnime',
+        anilistCatalogFetch({ page: 1, perPage: 16, sort: ['POPULARITY_DESC'] }).then(
+          (media) => media.map(normalizeAnilistMedia)
+        ),
+      ],
     ];
     const settled = await Promise.allSettled(jobs.map((job) => job[1]));
     const payload: Record<string, Array<Record<string, unknown>>> = {};

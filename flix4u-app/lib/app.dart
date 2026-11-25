@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
+import 'features/category/category_page.dart';
 import 'features/detail/detail_page.dart';
 import 'features/downloads/downloads_page.dart';
 import 'features/home/home_page.dart';
@@ -8,12 +9,25 @@ import 'features/library/library_page.dart';
 import 'features/player/player_page.dart';
 import 'features/search/search_page.dart';
 import 'features/settings/settings_page.dart';
+import 'features/splash/splash_page.dart';
+import 'theme/app_theme.dart';
 
 final GoRouter _router = GoRouter(
+  initialLocation: '/splash',
   routes: <RouteBase>[
+    GoRoute(
+      path: '/splash',
+      builder: (BuildContext context, GoRouterState state) =>
+          const SplashPage(),
+    ),
     GoRoute(
       path: '/',
       builder: (BuildContext context, GoRouterState state) => const HomePage(),
+    ),
+    GoRoute(
+      path: '/category/:key',
+      builder: (BuildContext context, GoRouterState state) =>
+          CategoryPage(categoryKey: state.pathParameters['key'] ?? 'movies'),
     ),
     GoRoute(
       path: '/detail/:type/:id',
@@ -64,16 +78,7 @@ class Flix4UApp extends StatelessWidget {
     return MaterialApp.router(
       title: 'Flix4U',
       debugShowCheckedModeBanner: false,
-      theme: ThemeData(
-        useMaterial3: true,
-        brightness: Brightness.dark,
-        colorSchemeSeed: const Color(0xFF7C4DFF),
-        scaffoldBackgroundColor: const Color(0xFF0E0F13),
-        appBarTheme: const AppBarTheme(
-          backgroundColor: Color(0xFF0E0F13),
-          elevation: 0,
-        ),
-      ),
+      theme: AppTheme.dark(),
       routerConfig: _router,
     );
   }

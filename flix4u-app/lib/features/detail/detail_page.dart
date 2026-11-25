@@ -1,5 +1,6 @@
 import 'dart:convert';
 
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:hive_flutter/hive_flutter.dart';
@@ -7,6 +8,7 @@ import 'package:hive_flutter/hive_flutter.dart';
 import '../../data/models/media_item.dart';
 import '../../data/repositories/catalog_repository.dart';
 import '../../data/repositories/stream_repository.dart';
+import '../../theme/app_theme.dart';
 
 class DetailPage extends StatefulWidget {
   const DetailPage({super.key, required this.type, required this.id});
@@ -49,6 +51,11 @@ class _DetailPageState extends State<DetailPage> {
     setState(() {});
   }
 
+  void _setEpisode(int episode) {
+    _episodeController.text = episode.toString();
+    setState(() {});
+  }
+
   Future<void> _play(MediaItem item) async {
     setState(() => _resolving = true);
     try {
@@ -65,9 +72,10 @@ class _DetailPageState extends State<DetailPage> {
         throw const FormatException('Backend returned no playable stream URL.');
       }
 
+      final encoded = jsonEncode(item.toJson());
       final continueList = _saved('continueWatching')
-        ..removeWhere((e) => e != jsonEncode(item.toJson()));
-      continueList.insert(0, jsonEncode(item.toJson()));
+        ..removeWhere((e) => e != encoded);
+      continueList.insert(0, encoded);
       await _library.put('continueWatching', continueList.take(20).toList());
 
       if (!mounted) return;
@@ -95,7 +103,7 @@ class _DetailPageState extends State<DetailPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('Details')),
+      backgroundColor: AppColors.background,
       body: FutureBuilder<MediaItem>(
         future: _catalog.detail(widget.type, widget.id),
         builder: (context, snapshot) {
@@ -104,93 +112,309 @@ class _DetailPageState extends State<DetailPage> {
           }
           if (snapshot.hasError || !snapshot.hasData) {
             return Center(
-              child: Text('Could not load details: ${snapshot.error}'),
+              child: Padding(
+                padding: const EdgeInsets.all(24),
+                child: Text(
+                  'Could not load details: ${snapshot.error}',
+                  textAlign: TextAlign.center,
+                ),
+              ),
             );
           }
           final item = snapshot.data!;
           final episodeBased = item.type == 'anime' || item.type == 'tv';
-          return SingleChildScrollView(
-            padding: const EdgeInsets.all(16),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: <Widget>[
-                Text(
-                  item.title,
-                  style: Theme.of(context).textTheme.headlineSmall
-                      ?.copyWith(fontWeight: FontWeight.bold),
-                ),
-                const SizedBox(height: 8),
-                Text(
-                  '${item.type.toUpperCase()}  •  ${item.year ?? '—'}  •  '
-                  '${item.rating?.toStringAsFixed(1) ?? '—'}  •  ${item.provider}',
-                  style: Theme.of(context).textTheme.bodyMedium
-                      ?.copyWith(color: Colors.white60),
-                ),
-                const SizedBox(height: 16),
-                Text(
-                  item.description.isEmpty
-                      ? 'No description available.'
-                      : item.description,
-                ),
-                const SizedBox(height: 12),
-                Wrap(
-                  spacing: 8,
-                  children: item.genres
-                      .map((g) => Chip(label: Text(g)))
-                      .toList(),
-                ),
-                const SizedBox(height: 20),
-                Row(
-                  children: <Widget>[
-                    IconButton(
-                      tooltip: 'Favorite',
-                      icon: Icon(
-                        _has('favorites', item)
-                            ? Icons.favorite
-                            : Icons.favorite_border,
-                        color: _has('favorites', item) ? Colors.red : null,
-                      ),
-                      onPressed: () => _toggle('favorites', item),
-                    ),
-                    IconButton(
-                      tooltip: 'Watchlist',
-                      icon: Icon(
-                        _has('watchlist', item)
-                            ? Icons.bookmark
-                            : Icons.bookmark_border,
-                      ),
-                      onPressed: () => _toggle('watchlist', item),
-                    ),
-                  ],
-                ),
-                if (episodeBased) ...<Widget>[
-                  const SizedBox(height: 8),
-                  TextField(
-                    controller: _episodeController,
-                    keyboardType: TextInputType.number,
-                    decoration: const InputDecoration(
-                      labelText: 'Episode number',
-                      border: OutlineInputBorder(),
-                      prefixIcon: Icon(Icons.numbers),
-                    ),
+          return CustomScrollView(
+            slivers: <Widget>[
+              SliverAppBar(
+                expandedHeight: 300,
+                pinned: true,
+                flexibleSpace: FlexibleSpaceBar(
+                  title: Text(
+                    item.title,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: const TextStyle(fontWeight: FontWeight.w800),
                   ),
-                  const SizedBox(height: 16),
-                ],
-                FilledButton.icon(
-                  onPressed: _resolving ? null : () => _play(item),
-                  icon: _resolving
-                      ? const SizedBox(
-                          width: 18,
-                          height: 18,
-                          child: CircularProgressIndicator(strokeWidth: 2),
-                        )
-                      : const Icon(Icons.play_arrow),
-                  label: Text(_resolving ? 'Resolving stream...' : 'Play'),
+                  titlePadding: const EdgeInsets.only(left: 20, bottom: 18),
+                  background: _backdrop(item),
                 ),
-              ],
-            ),
+                actions: <Widget>[
+                  IconButton(
+                    tooltip: 'Favorite',
+                    icon: Icon(
+                      _has('favorites', item)
+                          ? Icons.favorite
+                          : Icons.favorite_border,
+                      color: _has('favorites', item)
+                          ? AppColors.danger
+                          : Colors.white,
+                    ),
+                    onPressed: () => _toggle('favorites', item),
+                  ),
+                  IconButton(
+                    tooltip: 'Watchlist',
+                    icon: Icon(
+                      _has('watchlist', item)
+                          ? Icons.bookmark
+                          : Icons.bookmark_border,
+                    ),
+                    onPressed: () => _toggle('watchlist', item),
+                  ),
+                ],
+              ),
+              SliverToBoxAdapter(
+                child: Padding(
+                  padding: const EdgeInsets.fromLTRB(20, 16, 20, 40),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: <Widget>[
+                      Row(
+                        children: <Widget>[
+                          _pill(_typeLabel(item.type), AppColors.primary),
+                          const SizedBox(width: 8),
+                          if (item.year != null)
+                            _pill(item.year.toString(), AppColors.surfaceAlt),
+                          const SizedBox(width: 8),
+                          if (item.rating != null)
+                            _pill(
+                              '★ ${item.rating!.toStringAsFixed(1)}',
+                              AppColors.surfaceAlt,
+                            ),
+                        ],
+                      ),
+                      const SizedBox(height: 16),
+                      SizedBox(
+                        width: double.infinity,
+                        child: FilledButton.icon(
+                          onPressed: _resolving ? null : () => _play(item),
+                          icon: _resolving
+                              ? const SizedBox(
+                                  width: 18,
+                                  height: 18,
+                                  child: CircularProgressIndicator(
+                                    strokeWidth: 2,
+                                  ),
+                                )
+                              : const Icon(Icons.play_arrow_rounded),
+                          label: Text(
+                            _resolving ? 'Resolving stream...' : 'Play now',
+                          ),
+                        ),
+                      ),
+                      const SizedBox(height: 12),
+                      Row(
+                        children: <Widget>[
+                          Expanded(
+                            child: OutlinedButton.icon(
+                              onPressed: () => _toggle('watchlist', item),
+                              icon: Icon(
+                                _has('watchlist', item)
+                                    ? Icons.bookmark
+                                    : Icons.bookmark_border,
+                              ),
+                              label: Text(
+                                _has('watchlist', item)
+                                    ? 'In watchlist'
+                                    : 'Watchlist',
+                              ),
+                            ),
+                          ),
+                          const SizedBox(width: 10),
+                          Expanded(
+                            child: OutlinedButton.icon(
+                              onPressed: () => _toggle('favorites', item),
+                              icon: Icon(
+                                _has('favorites', item)
+                                    ? Icons.favorite
+                                    : Icons.favorite_border,
+                                color: _has('favorites', item)
+                                    ? AppColors.danger
+                                    : null,
+                              ),
+                              label: const Text('Favorite'),
+                            ),
+                          ),
+                        ],
+                      ),
+                      if (episodeBased) ...<Widget>[
+                        const SizedBox(height: 24),
+                        const Text(
+                          'Choose episode',
+                          style: TextStyle(
+                            color: Colors.white,
+                            fontWeight: FontWeight.w800,
+                            fontSize: 16,
+                          ),
+                        ),
+                        const SizedBox(height: 10),
+                        SizedBox(
+                          height: 38,
+                          child: ListView.separated(
+                            scrollDirection: Axis.horizontal,
+                            itemCount: 12,
+                            separatorBuilder: (_, __) =>
+                                const SizedBox(width: 8),
+                            itemBuilder: (context, index) {
+                              final episode = index + 1;
+                              final selected =
+                                  _episodeController.text == episode.toString();
+                              return ChoiceChip(
+                                label: Text('EP $episode'),
+                                selected: selected,
+                                onSelected: (_) => _setEpisode(episode),
+                                selectedColor: AppColors.primary,
+                                backgroundColor: AppColors.surfaceAlt,
+                                side: BorderSide.none,
+                              );
+                            },
+                          ),
+                        ),
+                        const SizedBox(height: 10),
+                        TextField(
+                          controller: _episodeController,
+                          keyboardType: TextInputType.number,
+                          decoration: const InputDecoration(
+                            labelText: 'Or enter episode number',
+                            prefixIcon: Icon(Icons.numbers),
+                          ),
+                        ),
+                      ],
+                      const SizedBox(height: 24),
+                      const Text(
+                        'About',
+                        style: TextStyle(
+                          color: Colors.white,
+                          fontWeight: FontWeight.w800,
+                          fontSize: 16,
+                        ),
+                      ),
+                      const SizedBox(height: 8),
+                      Text(
+                        item.description.isEmpty
+                            ? 'No description available.'
+                            : item.description.replaceAll(
+                                RegExp(r'<[^>]*>'),
+                                '',
+                              ),
+                        style: const TextStyle(
+                          color: Colors.white70,
+                          height: 1.5,
+                        ),
+                      ),
+                      if (item.genres.isNotEmpty) ...<Widget>[
+                        const SizedBox(height: 18),
+                        const Text(
+                          'Genres',
+                          style: TextStyle(
+                            color: Colors.white,
+                            fontWeight: FontWeight.w800,
+                            fontSize: 16,
+                          ),
+                        ),
+                        const SizedBox(height: 8),
+                        Wrap(
+                          spacing: 8,
+                          runSpacing: 8,
+                          children: item.genres
+                              .map(
+                                (g) => Chip(
+                                  label: Text(g),
+                                  backgroundColor: AppColors.surfaceAlt,
+                                ),
+                              )
+                              .toList(),
+                        ),
+                      ],
+                      const SizedBox(height: 20),
+                      Text(
+                        'Source: ${item.provider.toUpperCase()}  •  Guest access',
+                        style: const TextStyle(
+                          color: Colors.white30,
+                          fontSize: 11,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ],
           );
         },
+      ),
+    );
+  }
+
+  Widget _backdrop(MediaItem item) {
+    final image = item.backdrop.isNotEmpty ? item.backdrop : item.poster;
+    return Stack(
+      fit: StackFit.expand,
+      children: <Widget>[
+        if (image.isNotEmpty)
+          CachedNetworkImage(
+            imageUrl: image,
+            fit: BoxFit.cover,
+            placeholder: (_, __) => const _BackdropGradient(),
+            errorWidget: (_, __, ___) => const _BackdropGradient(),
+          )
+        else
+          const _BackdropGradient(),
+        const DecoratedBox(
+          decoration: BoxDecoration(
+            gradient: LinearGradient(
+              begin: Alignment.topCenter,
+              end: Alignment.bottomCenter,
+              colors: <Color>[
+                Color(0x3308080D),
+                Color(0x9908080D),
+                AppColors.background,
+              ],
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _pill(String text, Color color) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+      decoration: BoxDecoration(
+        color: color,
+        borderRadius: BorderRadius.circular(20),
+      ),
+      child: Text(
+        text,
+        style: const TextStyle(
+          color: Colors.white,
+          fontSize: 11,
+          fontWeight: FontWeight.w700,
+        ),
+      ),
+    );
+  }
+
+  String _typeLabel(String type) {
+    switch (type) {
+      case 'tv':
+        return 'WEB SERIES';
+      case 'anime':
+        return 'ANIME';
+      default:
+        return 'MOVIE';
+    }
+  }
+}
+
+class _BackdropGradient extends StatelessWidget {
+  const _BackdropGradient();
+
+  @override
+  Widget build(BuildContext context) {
+    return const DecoratedBox(
+      decoration: BoxDecoration(
+        gradient: LinearGradient(
+          colors: <Color>[Color(0xFF4C1D95), Color(0xFF0F172A)],
+        ),
       ),
     );
   }
