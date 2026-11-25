@@ -54,7 +54,7 @@ class _SettingsPageState extends State<SettingsPage> {
             decoration: BoxDecoration(
               borderRadius: BorderRadius.circular(18),
               gradient: const LinearGradient(
-                colors: <Color>[Color(0xFF3B1D73), Color(0xFF111827)],
+                colors: <Color>[Color(0xFF244A3A), Color(0xFF101115)],
               ),
             ),
             child: const Row(
@@ -118,7 +118,7 @@ class _SettingsPageState extends State<SettingsPage> {
           ),
         ],
       ),
-      bottomNavigationBar: const AppBottomNav(selectedIndex: 4),
+      bottomNavigationBar: const AppBottomNav(selectedIndex: 3),
     );
   }
 

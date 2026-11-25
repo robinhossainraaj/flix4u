@@ -1,5 +1,8 @@
+import 'dart:convert';
+
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
+import 'package:hive_flutter/hive_flutter.dart';
 
 import '../../data/models/media_item.dart';
 import '../../data/repositories/catalog_repository.dart';
@@ -120,6 +123,21 @@ class _HomePageState extends State<HomePage> {
     }
   }
 
+  List<MediaItem> _continueWatching() {
+    final value = Hive.box('library').get('continueWatching');
+    if (value is! List) return const <MediaItem>[];
+    final items = <MediaItem>[];
+    for (final entry in value.take(12)) {
+      try {
+        final decoded = jsonDecode(entry.toString()) as Map<String, dynamic>;
+        items.add(MediaItem.fromJson(decoded));
+      } catch (_) {
+        // ignore malformed local entries
+      }
+    }
+    return items;
+  }
+
   List<MediaItem> _heroItems(Map<String, List<MediaItem>> sections) {
     final order =
         _sectionOrders[_selectedCategory] ?? _sectionOrders['trending']!;
@@ -211,6 +229,15 @@ class _HomePageState extends State<HomePage> {
                     onDetails: _openDetail,
                   ),
                 ),
+                if (_continueWatching().isNotEmpty)
+                  SliverToBoxAdapter(
+                    child: SectionRail(
+                      title: 'Continue Watching',
+                      subtitle: 'Jump back in',
+                      items: _continueWatching(),
+                      onTap: _openDetail,
+                    ),
+                  ),
                 ..._rails(sections).map(
                   (entry) => SliverToBoxAdapter(
                     child: SectionRail(
@@ -249,7 +276,7 @@ class _HomePageState extends State<HomePage> {
               selected: selected,
               onSelected: (_) => setState(() => _selectedCategory = entry.key),
               labelStyle: TextStyle(
-                color: selected ? Colors.white : Colors.white70,
+                color: selected ? const Color(0xFF062315) : Colors.white70,
                 fontWeight: FontWeight.w700,
               ),
               selectedColor: AppColors.primary,

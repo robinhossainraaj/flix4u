@@ -54,7 +54,7 @@ class _CategoryPageState extends State<CategoryPage> {
         'anime': _CategoryInfo(
           title: 'Anime',
           subtitle: 'Trending and popular anime from AniList',
-          icon: Icons.animation_rounded,
+          icon: Icons.auto_awesome,
           keys: <String>['anime', 'popularAnime', 'trending'],
         ),
         'free': _CategoryInfo(
@@ -329,17 +329,17 @@ class _CategoryPageState extends State<CategoryPage> {
                   sliver: SliverGrid(
                     gridDelegate:
                         const SliverGridDelegateWithFixedCrossAxisCount(
-                          crossAxisCount: 3,
-                          crossAxisSpacing: 10,
+                          crossAxisCount: 2,
+                          crossAxisSpacing: 12,
                           mainAxisSpacing: 14,
-                          childAspectRatio: 0.56,
+                          childAspectRatio: 1.05,
                         ),
                     delegate: SliverChildBuilderDelegate((context, index) {
                       final item = items[index];
                       return MediaCard(
                         item: item,
-                        width: 108,
-                        imageHeight: 150,
+                        width: 164,
+                        imageHeight: 96,
                         onTap: () => _openDetail(item),
                       );
                     }, childCount: items.length),
@@ -396,7 +396,7 @@ class _BannerGradient extends StatelessWidget {
     return const DecoratedBox(
       decoration: BoxDecoration(
         gradient: LinearGradient(
-          colors: <Color>[Color(0xFF4C1D95), Color(0xFF0F172A)],
+          colors: <Color>[Color(0xFF244A3A), Color(0xFF101115)],
         ),
       ),
     );

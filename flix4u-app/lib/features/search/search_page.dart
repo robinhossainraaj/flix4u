@@ -102,7 +102,9 @@ class _SearchPageState extends State<SearchPage> {
                     backgroundColor: AppColors.surfaceAlt,
                     side: BorderSide.none,
                     labelStyle: TextStyle(
-                      color: selected ? Colors.white : Colors.white70,
+                      color: selected
+                          ? const Color(0xFF062315)
+                          : Colors.white70,
                       fontWeight: FontWeight.w700,
                     ),
                   );
@@ -141,18 +143,18 @@ class _SearchPageState extends State<SearchPage> {
                           padding: const EdgeInsets.fromLTRB(16, 8, 16, 16),
                           gridDelegate:
                               const SliverGridDelegateWithFixedCrossAxisCount(
-                                crossAxisCount: 3,
-                                crossAxisSpacing: 10,
+                                crossAxisCount: 2,
+                                crossAxisSpacing: 12,
                                 mainAxisSpacing: 14,
-                                childAspectRatio: 0.56,
+                                childAspectRatio: 1.02,
                               ),
                           itemCount: items.length,
                           itemBuilder: (context, index) {
                             final item = items[index];
                             return MediaCard(
                               item: item,
-                              width: 108,
-                              imageHeight: 150,
+                              width: 164,
+                              imageHeight: 96,
                               onTap: () => context.go(
                                 '/detail/${item.type}/${Uri.encodeComponent(item.id)}',
                               ),

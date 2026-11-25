@@ -75,7 +75,7 @@ class SectionRail extends StatelessWidget {
                     child: const Row(
                       mainAxisSize: MainAxisSize.min,
                       children: <Widget>[
-                        Text('See all'),
+                        Text('All'),
                         Icon(Icons.chevron_right, size: 16),
                       ],
                     ),
@@ -85,7 +85,7 @@ class SectionRail extends StatelessWidget {
           ),
           const SizedBox(height: 10),
           SizedBox(
-            height: 216,
+            height: 172,
             child: ListView.separated(
               padding: const EdgeInsets.symmetric(horizontal: 16),
               scrollDirection: Axis.horizontal,

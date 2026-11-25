@@ -9,8 +9,8 @@ class MediaCard extends StatelessWidget {
     super.key,
     required this.item,
     this.onTap,
-    this.width = 132,
-    this.imageHeight = 176,
+    this.width = 168,
+    this.imageHeight = 98,
   });
 
   final MediaItem item;
@@ -24,7 +24,7 @@ class MediaCard extends StatelessWidget {
       width: width,
       child: InkWell(
         onTap: onTap,
-        borderRadius: BorderRadius.circular(14),
+        borderRadius: BorderRadius.circular(10),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           mainAxisSize: MainAxisSize.min,
@@ -32,7 +32,7 @@ class MediaCard extends StatelessWidget {
             Stack(
               children: <Widget>[
                 ClipRRect(
-                  borderRadius: BorderRadius.circular(14),
+                  borderRadius: BorderRadius.circular(10),
                   child: item.poster.isNotEmpty
                       ? CachedNetworkImage(
                           imageUrl: item.poster,
@@ -40,23 +40,23 @@ class MediaCard extends StatelessWidget {
                           width: width,
                           fit: BoxFit.cover,
                           placeholder: (_, __) =>
-                              _PosterPlaceholder(height: imageHeight),
+                              _ThumbPlaceholder(height: imageHeight),
                           errorWidget: (_, __, ___) =>
-                              _PosterPlaceholder(height: imageHeight),
+                              _ThumbPlaceholder(height: imageHeight),
                         )
-                      : _PosterPlaceholder(height: imageHeight),
+                      : _ThumbPlaceholder(height: imageHeight),
                 ),
                 Positioned(
-                  top: 8,
-                  left: 8,
+                  left: 7,
+                  bottom: 7,
                   child: Container(
                     padding: const EdgeInsets.symmetric(
-                      horizontal: 7,
-                      vertical: 4,
+                      horizontal: 6,
+                      vertical: 3,
                     ),
                     decoration: BoxDecoration(
-                      color: _typeColor().withOpacity(0.92),
-                      borderRadius: BorderRadius.circular(6),
+                      color: Colors.black.withOpacity(0.72),
+                      borderRadius: BorderRadius.circular(5),
                     ),
                     child: Text(
                       _typeLabel(),
@@ -64,39 +64,39 @@ class MediaCard extends StatelessWidget {
                         color: Colors.white,
                         fontSize: 9,
                         fontWeight: FontWeight.w800,
-                        letterSpacing: 0.5,
+                        letterSpacing: 0.4,
                       ),
                     ),
                   ),
                 ),
                 if (item.rating != null)
                   Positioned(
-                    top: 8,
-                    right: 8,
+                    right: 7,
+                    top: 7,
                     child: Container(
                       padding: const EdgeInsets.symmetric(
                         horizontal: 6,
-                        vertical: 4,
+                        vertical: 3,
                       ),
                       decoration: BoxDecoration(
-                        color: Colors.black.withOpacity(0.68),
-                        borderRadius: BorderRadius.circular(6),
+                        color: AppColors.primary,
+                        borderRadius: BorderRadius.circular(5),
                       ),
                       child: Row(
                         mainAxisSize: MainAxisSize.min,
                         children: <Widget>[
                           const Icon(
                             Icons.star_rounded,
-                            size: 11,
-                            color: AppColors.gold,
+                            size: 10,
+                            color: Color(0xFF062315),
                           ),
-                          const SizedBox(width: 3),
+                          const SizedBox(width: 2),
                           Text(
                             item.rating!.toStringAsFixed(1),
                             style: const TextStyle(
-                              color: Colors.white,
+                              color: Color(0xFF062315),
                               fontSize: 10,
-                              fontWeight: FontWeight.w700,
+                              fontWeight: FontWeight.w800,
                             ),
                           ),
                         ],
@@ -105,13 +105,13 @@ class MediaCard extends StatelessWidget {
                   ),
               ],
             ),
-            const SizedBox(height: 8),
+            const SizedBox(height: 7),
             Text(
               item.title,
               maxLines: 2,
               overflow: TextOverflow.ellipsis,
               style: const TextStyle(
-                color: Colors.white,
+                color: AppColors.text,
                 fontSize: 13,
                 fontWeight: FontWeight.w700,
               ),
@@ -140,17 +140,6 @@ class MediaCard extends StatelessWidget {
     }
   }
 
-  Color _typeColor() {
-    switch (item.type) {
-      case 'tv':
-        return const Color(0xFF0EA5E9);
-      case 'anime':
-        return const Color(0xFFEC4899);
-      default:
-        return AppColors.primary;
-    }
-  }
-
   String _metaLine() {
     final parts = <String>[];
     if (item.year != null) parts.add(item.year.toString());
@@ -160,8 +149,8 @@ class MediaCard extends StatelessWidget {
   }
 }
 
-class _PosterPlaceholder extends StatelessWidget {
-  const _PosterPlaceholder({required this.height});
+class _ThumbPlaceholder extends StatelessWidget {
+  const _ThumbPlaceholder({required this.height});
 
   final double height;
 
@@ -172,13 +161,10 @@ class _PosterPlaceholder extends StatelessWidget {
       width: double.infinity,
       decoration: const BoxDecoration(
         gradient: LinearGradient(
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-          colors: <Color>[Color(0xFF27233A), Color(0xFF12141B)],
+          colors: <Color>[Color(0xFF2A2C33), Color(0xFF15161B)],
         ),
       ),
-      alignment: Alignment.center,
-      child: const Icon(Icons.movie_rounded, color: Colors.white24, size: 40),
+      child: const Icon(Icons.movie_rounded, color: Colors.white24, size: 28),
     );
   }
 }

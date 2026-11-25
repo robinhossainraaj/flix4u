@@ -1,8 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
-import '../theme/app_theme.dart';
-
 class AppBottomNav extends StatelessWidget {
   const AppBottomNav({super.key, required this.selectedIndex});
 
@@ -17,13 +15,10 @@ class AppBottomNav extends StatelessWidget {
         context.go('/search');
         break;
       case 2:
-        context.go('/library');
-        break;
-      case 3:
         context.go('/downloads');
         break;
-      case 4:
-        context.go('/settings');
+      case 3:
+        context.go('/me');
         break;
     }
   }
@@ -45,19 +40,14 @@ class AppBottomNav extends StatelessWidget {
           label: 'Search',
         ),
         NavigationDestination(
-          icon: Icon(Icons.bookmark_border),
-          selectedIcon: Icon(Icons.bookmark_rounded),
-          label: 'Library',
-        ),
-        NavigationDestination(
           icon: Icon(Icons.download_outlined),
           selectedIcon: Icon(Icons.download_rounded),
           label: 'Downloads',
         ),
         NavigationDestination(
-          icon: Icon(Icons.settings_outlined),
-          selectedIcon: Icon(Icons.settings_rounded),
-          label: 'Settings',
+          icon: Icon(Icons.person_outline),
+          selectedIcon: Icon(Icons.person_rounded),
+          label: 'Me',
         ),
       ],
     );

@@ -6,6 +6,7 @@ import 'features/detail/detail_page.dart';
 import 'features/downloads/downloads_page.dart';
 import 'features/home/home_page.dart';
 import 'features/library/library_page.dart';
+import 'features/me/me_page.dart';
 import 'features/player/player_page.dart';
 import 'features/search/search_page.dart';
 import 'features/settings/settings_page.dart';
@@ -56,6 +57,10 @@ final GoRouter _router = GoRouter(
       path: '/library',
       builder: (BuildContext context, GoRouterState state) =>
           const LibraryPage(),
+    ),
+    GoRoute(
+      path: '/me',
+      builder: (BuildContext context, GoRouterState state) => const MePage(),
     ),
     GoRoute(
       path: '/downloads',

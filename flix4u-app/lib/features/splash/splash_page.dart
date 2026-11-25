@@ -56,9 +56,9 @@ class _SplashPageState extends State<SplashPage>
                 begin: Alignment.topLeft,
                 end: Alignment.bottomRight,
                 colors: <Color>[
-                  Color(0xFF0B0716),
-                  Color(0xFF111827),
-                  Color(0xFF06070A),
+                  Color(0xFF08120E),
+                  Color(0xFF111A17),
+                  Color(0xFF08090B),
                 ],
               ),
             ),
@@ -111,7 +111,7 @@ class _SplashPageState extends State<SplashPage>
                       const SizedBox(height: 24),
                       ShaderMask(
                         shaderCallback: (bounds) => const LinearGradient(
-                          colors: <Color>[Colors.white, Color(0xFFC4B5FD)],
+                          colors: <Color>[Colors.white, AppColors.primary],
                         ).createShader(bounds),
                         child: const Text(
                           'Flix4U',

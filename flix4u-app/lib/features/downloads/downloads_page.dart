@@ -54,7 +54,7 @@ class DownloadsPage extends StatelessWidget {
           ),
         ),
       ),
-      bottomNavigationBar: const AppBottomNav(selectedIndex: 3),
+      bottomNavigationBar: const AppBottomNav(selectedIndex: 2),
     );
   }
 }
