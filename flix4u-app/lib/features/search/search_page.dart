@@ -9,6 +9,7 @@ import '../../data/models/media_item.dart';
 import '../../data/repositories/catalog_repository.dart';
 import '../../theme/app_theme.dart';
 import '../../widgets/app_back_button.dart';
+import '../../widgets/skeleton_loading.dart';
 import '../../widgets/tab_pop_scope.dart';
 
 class SearchPage extends StatefulWidget {
@@ -393,69 +394,58 @@ class _SearchPageState extends State<SearchPage> {
             future: _future,
             builder: (context, snapshot) {
               if (snapshot.connectionState == ConnectionState.waiting) {
-                return const Center(
-                  child: CircularProgressIndicator(color: AppColors.accent),
+                return const ContentSwitcher(
+                  stateKey: 'search-loading',
+                  child: SearchResultsSkeleton(),
                 );
               }
               if (snapshot.hasError || _error != null) {
-                return Center(
-                  child: Padding(
-                    padding: const EdgeInsets.all(24),
+                return ContentSwitcher(
+                  stateKey: 'search-error',
+                  child: SkeletonErrorState(
+                    title: 'Search failed',
+                    message: '${snapshot.error ?? _error ?? ''}',
+                    onRetry: () => _runSearch(),
+                  ),
+                );
+              }
+              final items = snapshot.data ?? const <MediaItem>[];
+              if (items.isEmpty) {
+                return ContentSwitcher(
+                  stateKey: 'search-empty',
+                  child: Center(
                     child: Column(
                       mainAxisSize: MainAxisSize.min,
                       children: <Widget>[
                         const Icon(
-                          Icons.wifi_off_rounded,
-                          size: 40,
+                          Icons.search_off_rounded,
+                          size: 44,
                           color: AppColors.muted,
                         ),
                         const SizedBox(height: 10),
-                        Text(
-                          'Search failed. ${snapshot.error ?? _error ?? ''}',
-                          textAlign: TextAlign.center,
-                          style: const TextStyle(color: AppColors.muted),
+                        const Text(
+                          'No results for this search.',
+                          style: TextStyle(color: AppColors.muted),
                         ),
-                        const SizedBox(height: 12),
-                        FilledButton(
+                        const SizedBox(height: 10),
+                        OutlinedButton(
                           onPressed: () => _runSearch(),
-                          child: const Text('Try again'),
+                          child: const Text('Search again'),
                         ),
                       ],
                     ),
                   ),
                 );
               }
-              final items = snapshot.data ?? const <MediaItem>[];
-              if (items.isEmpty) {
-                return Center(
-                  child: Column(
-                    mainAxisSize: MainAxisSize.min,
-                    children: <Widget>[
-                      const Icon(
-                        Icons.search_off_rounded,
-                        size: 44,
-                        color: AppColors.muted,
-                      ),
-                      const SizedBox(height: 10),
-                      const Text(
-                        'No results for this search.',
-                        style: TextStyle(color: AppColors.muted),
-                      ),
-                      const SizedBox(height: 10),
-                      OutlinedButton(
-                        onPressed: () => _runSearch(),
-                        child: const Text('Search again'),
-                      ),
-                    ],
-                  ),
-                );
-              }
-              return ListView.separated(
-                padding: const EdgeInsets.fromLTRB(13, 8, 13, 24),
-                itemCount: items.length,
-                separatorBuilder: (_, __) => const SizedBox(height: 8),
-                itemBuilder: (context, index) =>
-                    _resultTile(items[index], index + 1),
+              return ContentSwitcher(
+                stateKey: 'search-data',
+                child: ListView.separated(
+                  padding: const EdgeInsets.fromLTRB(13, 8, 13, 24),
+                  itemCount: items.length,
+                  separatorBuilder: (_, __) => const SizedBox(height: 8),
+                  itemBuilder: (context, index) =>
+                      _resultTile(items[index], index + 1),
+                ),
               );
             },
           ),
@@ -487,7 +477,11 @@ class _SearchPageState extends State<SearchPage> {
                               imageUrl: item.poster,
                               fit: BoxFit.cover,
                               errorWidget: (_, __, ___) => const _PosterFallback(),
-                              placeholder: (_, __) => const _PosterFallback(),
+                              placeholder: (_, __) => const SkeletonThumbnail(
+                                width: 55,
+                                height: 74,
+                                radius: 4,
+                              ),
                             )
                           : const _PosterFallback(),
                     ),

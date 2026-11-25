@@ -13,6 +13,7 @@ import '../../data/repositories/catalog_repository.dart';
 import '../../data/repositories/stream_repository.dart';
 import '../../theme/app_theme.dart';
 import '../../widgets/app_back_button.dart';
+import '../../widgets/skeleton_loading.dart';
 
 class DetailPage extends StatefulWidget {
   const DetailPage({
@@ -46,6 +47,14 @@ class _DetailPageState extends State<DetailPage> {
     _parseSource();
     _detailFuture = _catalog.detail(widget.type, widget.id);
     _detailFuture!.then((item) {
+      if (mounted) setState(() => _loaded = item);
+    }).catchError((_) {});
+  }
+
+  void _reloadDetail() {
+    final future = _catalog.detail(widget.type, widget.id);
+    setState(() => _detailFuture = future);
+    future.then((item) {
       if (mounted) setState(() => _loaded = item);
     }).catchError((_) {});
   }
@@ -186,9 +195,28 @@ class _DetailPageState extends State<DetailPage> {
       body: FutureBuilder<MediaItem>(
         future: _detailFuture,
         builder: (context, snapshot) {
-          final item = snapshot.data ?? _fallback;
-          return CustomScrollView(
-            slivers: <Widget>[
+          if (snapshot.connectionState == ConnectionState.waiting &&
+              _loaded == null) {
+            return const ContentSwitcher(
+              stateKey: 'detail-loading',
+              child: DetailSkeleton(),
+            );
+          }
+          if (snapshot.hasError && _loaded == null) {
+            return ContentSwitcher(
+              stateKey: 'detail-error',
+              child: SkeletonErrorState(
+                title: 'Could not load details',
+                message: '${snapshot.error ?? ''}',
+                onRetry: _reloadDetail,
+              ),
+            );
+          }
+          final item = snapshot.data ?? _loaded ?? _fallback;
+          return ContentSwitcher(
+            stateKey: 'detail-content',
+            child: CustomScrollView(
+              slivers: <Widget>[
               SliverAppBar(
                 expandedHeight: 280,
                 pinned: true,
@@ -291,7 +319,8 @@ class _DetailPageState extends State<DetailPage> {
                   ),
                 ),
               ),
-            ],
+              ],
+            ),
           );
         },
       ),
@@ -308,7 +337,13 @@ class _DetailPageState extends State<DetailPage> {
             imageUrl: image,
             fit: BoxFit.cover,
             errorWidget: (_, __, ___) => const _HeroFallback(),
-            placeholder: (_, __) => const _HeroFallback(),
+            placeholder: (_, __) => const Shimmer(
+              child: SkeletonBox(
+                width: double.infinity,
+                height: double.infinity,
+                radius: 0,
+              ),
+            ),
           )
         else
           const _HeroFallback(),

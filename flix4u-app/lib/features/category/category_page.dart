@@ -9,6 +9,7 @@ import '../../theme/app_theme.dart';
 import '../../widgets/app_back_button.dart';
 import '../../widgets/app_bottom_nav.dart';
 import '../../widgets/brand_mark.dart';
+import '../../widgets/skeleton_loading.dart';
 
 class CategoryPage extends StatefulWidget {
   const CategoryPage({
@@ -41,6 +42,8 @@ class _CategoryPageState extends State<CategoryPage> {
 
   final CatalogRepository _repository = CatalogRepository();
   late Future<Map<String, List<MediaItem>>> _future;
+  Map<String, List<MediaItem>> _cachedSections =
+      const <String, List<MediaItem>>{};
 
   late String _channel;
   late String _subTab;
@@ -55,6 +58,20 @@ class _CategoryPageState extends State<CategoryPage> {
     _channel = _channels.contains(widget.channel) ? widget.channel! : 'Hindi';
     _subTab = _initialSubTab();
     _future = _repository.loadHome();
+    _future.then((sections) {
+      if (mounted) setState(() => _cachedSections = sections);
+    }).catchError((_) {});
+  }
+
+  Future<void> _reload() async {
+    final future = _repository.loadHome();
+    setState(() => _future = future);
+    try {
+      final sections = await future;
+      if (mounted) setState(() => _cachedSections = sections);
+    } catch (_) {
+      // Keep the last loaded catalog if refreshing fails.
+    }
   }
 
   String _initialSubTab() {
@@ -211,82 +228,97 @@ class _CategoryPageState extends State<CategoryPage> {
             Expanded(
               child: FutureBuilder<Map<String, List<MediaItem>>>(
                 future: _future,
+                initialData:
+                    _cachedSections.isEmpty ? null : _cachedSections,
                 builder: (context, snapshot) {
-                  if (snapshot.connectionState == ConnectionState.waiting) {
-                    return const Center(
-                      child: CircularProgressIndicator(color: AppColors.accent),
+                  if (_cachedSections.isEmpty &&
+                      snapshot.connectionState == ConnectionState.waiting) {
+                    return const ContentSwitcher(
+                      stateKey: 'category-loading',
+                      child: CategoryGridSkeleton(),
                     );
                   }
-                  final sections =
-                      snapshot.data ?? const <String, List<MediaItem>>{};
+                  if (_cachedSections.isEmpty && snapshot.hasError) {
+                    return ContentSwitcher(
+                      stateKey: 'category-error',
+                      child: SkeletonErrorState(
+                        title: 'Could not load this category',
+                        message: '${snapshot.error ?? ''}',
+                        onRetry: _reload,
+                      ),
+                    );
+                  }
+                  final sections = (snapshot.data?.isNotEmpty ?? false)
+                      ? snapshot.data!
+                      : _cachedSections;
                   final all = _sourceItems(sections);
                   final items = _filter(all);
-                  return RefreshIndicator(
-                    color: AppColors.accent,
-                    backgroundColor: AppColors.surface,
-                    onRefresh: () async {
-                      final future = _repository.loadHome();
-                      setState(() => _future = future);
-                      await future;
-                    },
-                    child: CustomScrollView(
-                      physics: const AlwaysScrollableScrollPhysics(),
-                      slivers: <Widget>[
-                        SliverToBoxAdapter(
-                          child: _filterPills(
-                            genres: _options(all, 'genre'),
-                            countries: _options(all, 'country'),
-                            years: _years(all),
+                  return ContentSwitcher(
+                    stateKey: 'category-content',
+                    child: RefreshIndicator(
+                      color: AppColors.accent,
+                      backgroundColor: AppColors.surface,
+                      onRefresh: _reload,
+                      child: CustomScrollView(
+                        physics: const AlwaysScrollableScrollPhysics(),
+                        slivers: <Widget>[
+                          SliverToBoxAdapter(
+                            child: _filterPills(
+                              genres: _options(all, 'genre'),
+                              countries: _options(all, 'country'),
+                              years: _years(all),
+                            ),
                           ),
-                        ),
-                        if (items.isEmpty)
-                          SliverFillRemaining(
-                            hasScrollBody: false,
-                            child: Center(
-                              child: Padding(
-                                padding: const EdgeInsets.all(28),
-                                child: Column(
-                                  mainAxisSize: MainAxisSize.min,
-                                  children: <Widget>[
-                                    const Icon(
-                                      Icons.filter_alt_off_rounded,
-                                      size: 48,
-                                      color: AppColors.muted,
-                                    ),
-                                    const SizedBox(height: 10),
-                                    const Text(
-                                      'No titles match these filters.',
-                                      style: TextStyle(color: AppColors.muted),
-                                    ),
-                                    const SizedBox(height: 12),
-                                    OutlinedButton(
-                                      onPressed: _resetFilters,
-                                      child: const Text('Reset filters'),
-                                    ),
-                                  ],
+                          if (items.isEmpty)
+                            SliverFillRemaining(
+                              hasScrollBody: false,
+                              child: Center(
+                                child: Padding(
+                                  padding: const EdgeInsets.all(28),
+                                  child: Column(
+                                    mainAxisSize: MainAxisSize.min,
+                                    children: <Widget>[
+                                      const Icon(
+                                        Icons.filter_alt_off_rounded,
+                                        size: 48,
+                                        color: AppColors.muted,
+                                      ),
+                                      const SizedBox(height: 10),
+                                      const Text(
+                                        'No titles match these filters.',
+                                        style: TextStyle(color: AppColors.muted),
+                                      ),
+                                      const SizedBox(height: 12),
+                                      OutlinedButton(
+                                        onPressed: _resetFilters,
+                                        child: const Text('Reset filters'),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                              ),
+                            )
+                          else
+                            SliverPadding(
+                              padding:
+                                  const EdgeInsets.fromLTRB(13, 8, 13, 24),
+                              sliver: SliverGrid(
+                                gridDelegate:
+                                    const SliverGridDelegateWithFixedCrossAxisCount(
+                                  crossAxisCount: 3,
+                                  crossAxisSpacing: 8,
+                                  mainAxisSpacing: 14,
+                                  childAspectRatio: 0.62,
+                                ),
+                                delegate: SliverChildBuilderDelegate(
+                                  (context, index) =>
+                                      _gridCard(items[index]),
+                                  childCount: items.length,
                                 ),
                               ),
                             ),
-                          )
-                        else
-                          SliverPadding(
-                            padding: const EdgeInsets.fromLTRB(13, 8, 13, 24),
-                            sliver: SliverGrid(
-                              gridDelegate:
-                                  const SliverGridDelegateWithFixedCrossAxisCount(
-                                crossAxisCount: 3,
-                                crossAxisSpacing: 8,
-                                mainAxisSpacing: 14,
-                                childAspectRatio: 0.62,
-                              ),
-                              delegate: SliverChildBuilderDelegate(
-                                (context, index) =>
-                                    _gridCard(items[index]),
-                                childCount: items.length,
-                              ),
-                            ),
-                          ),
-                      ],
+                        ],
+                      ),
                     ),
                   );
                 },
@@ -671,7 +703,13 @@ class _CategoryPageState extends State<CategoryPage> {
                         imageUrl: item.poster,
                         fit: BoxFit.cover,
                         errorWidget: (_, __, ___) => const _GridFallback(),
-                        placeholder: (_, __) => const _GridFallback(),
+                        placeholder: (_, __) => const Shimmer(
+                          child: SkeletonBox(
+                            width: double.infinity,
+                            height: double.infinity,
+                            radius: 5,
+                          ),
+                        ),
                       )
                     else
                       const _GridFallback(),

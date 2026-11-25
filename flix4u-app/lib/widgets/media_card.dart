@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 
 import '../data/models/media_item.dart';
 import '../theme/app_theme.dart';
+import 'skeleton_loading.dart';
 
 class MediaCard extends StatelessWidget {
   const MediaCard({
@@ -41,8 +42,11 @@ class MediaCard extends StatelessWidget {
                         height: imageHeight,
                         width: width,
                         fit: BoxFit.cover,
-                        placeholder: (_, __) =>
-                            _ThumbPlaceholder(height: imageHeight),
+                        placeholder: (_, __) => SkeletonThumbnail(
+                          width: width,
+                          height: imageHeight,
+                          radius: 8,
+                        ),
                         errorWidget: (_, __, ___) =>
                             _ThumbPlaceholder(height: imageHeight),
                       )

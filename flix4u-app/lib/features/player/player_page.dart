@@ -17,6 +17,7 @@ import '../../data/repositories/catalog_repository.dart';
 import '../../theme/app_theme.dart';
 import '../../widgets/app_back_button.dart';
 import '../../widgets/section_rail.dart';
+import '../../widgets/skeleton_loading.dart';
 
 class PlayerPage extends StatefulWidget {
   const PlayerPage({
@@ -456,42 +457,47 @@ class _PlayerPageState extends State<PlayerPage> {
       color: Colors.black,
       child: Stack(
         children: <Widget>[
-          if (_chewieController != null)
-            Center(
-              child: Chewie(controller: _chewieController!),
-            )
-          else if (_loading)
-            const Center(
-              child: CircularProgressIndicator(color: AppColors.accent),
-            )
-          else
-            Center(
-              child: Padding(
-                padding: const EdgeInsets.all(20),
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  children: <Widget>[
-                    const Icon(
-                      Icons.play_circle_outline_rounded,
-                      color: AppColors.accentSoft,
-                      size: 44,
+          ContentSwitcher(
+            stateKey: _chewieController != null
+                ? 'player-ready'
+                : _loading
+                ? 'player-loading'
+                : 'player-error',
+            child: _chewieController != null
+                ? Center(child: Chewie(controller: _chewieController!))
+                : _loading
+                ? const PlayerSkeleton()
+                : Center(
+                    child: Padding(
+                      padding: const EdgeInsets.all(20),
+                      child: Column(
+                        mainAxisSize: MainAxisSize.min,
+                        children: <Widget>[
+                          const Icon(
+                            Icons.play_circle_outline_rounded,
+                            color: AppColors.accentSoft,
+                            size: 44,
+                          ),
+                          const SizedBox(height: 10),
+                          Text(
+                            _error ?? 'This resource could not be played.',
+                            textAlign: TextAlign.center,
+                            style: const TextStyle(
+                              color: AppColors.text,
+                              fontSize: 13,
+                            ),
+                          ),
+                          const SizedBox(height: 10),
+                          OutlinedButton.icon(
+                            onPressed: () => _start(_selectedOption),
+                            icon: const Icon(Icons.refresh_rounded),
+                            label: const Text('Retry'),
+                          ),
+                        ],
+                      ),
                     ),
-                    const SizedBox(height: 10),
-                    Text(
-                      _error ?? 'This resource could not be played.',
-                      textAlign: TextAlign.center,
-                      style: const TextStyle(color: AppColors.text, fontSize: 13),
-                    ),
-                    const SizedBox(height: 10),
-                    OutlinedButton.icon(
-                      onPressed: () => _start(_selectedOption),
-                      icon: const Icon(Icons.refresh_rounded),
-                      label: const Text('Retry'),
-                    ),
-                  ],
-                ),
-              ),
-            ),
+                  ),
+          ),
           Positioned(
             left: 8,
             top: 8,

@@ -15,6 +15,7 @@ import '../../widgets/app_bottom_nav.dart';
 import '../../widgets/brand_mark.dart';
 import '../../widgets/hero_carousel.dart';
 import '../../widgets/section_rail.dart';
+import '../../widgets/skeleton_loading.dart';
 
 class HomePage extends StatefulWidget {
   const HomePage({super.key});
@@ -67,6 +68,8 @@ class _HomePageState extends State<HomePage> {
 
   final CatalogRepository _catalog = CatalogRepository();
   late Future<Map<String, List<MediaItem>>> _homeFuture;
+  Map<String, List<MediaItem>> _cachedSections =
+      const <String, List<MediaItem>>{};
   String _channel = 'Channel';
   DateTime? _lastBackPressed;
 
@@ -74,15 +77,19 @@ class _HomePageState extends State<HomePage> {
   void initState() {
     super.initState();
     _homeFuture = _catalog.loadHome();
+    _homeFuture.then((sections) {
+      if (mounted) setState(() => _cachedSections = sections);
+    }).catchError((_) {});
   }
 
   Future<void> _refresh() async {
     final future = _catalog.loadHome();
     setState(() => _homeFuture = future);
     try {
-      await future;
+      final sections = await future;
+      if (mounted) setState(() => _cachedSections = sections);
     } catch (_) {
-      // Repository falls back to public APIs.
+      // Repository falls back to public APIs. Keep the previously loaded data.
     }
   }
 
@@ -190,10 +197,20 @@ class _HomePageState extends State<HomePage> {
               Expanded(
                 child: FutureBuilder<Map<String, List<MediaItem>>>(
                   future: _homeFuture,
+                  initialData:
+                      _cachedSections.isEmpty ? null : _cachedSections,
                   builder: (context, snapshot) {
-                    final sections =
-                        (snapshot.hasData && snapshot.data!.isNotEmpty)
+                    if (_cachedSections.isEmpty &&
+                        snapshot.connectionState == ConnectionState.waiting) {
+                      return const ContentSwitcher(
+                        stateKey: 'home-loading',
+                        child: HomeSkeleton(),
+                      );
+                    }
+                    final sections = (snapshot.data?.isNotEmpty ?? false)
                         ? snapshot.data!
+                        : _cachedSections.isNotEmpty
+                        ? _cachedSections
                         : <String, List<MediaItem>>{
                             'trending': kSampleMedia,
                             'movies': kSampleMedia,
@@ -204,62 +221,71 @@ class _HomePageState extends State<HomePage> {
                     final continueItems = _continueWatching();
                     final firstRail = _railItems(sections, 0);
                     final secondRail = _railItems(sections, 1);
+                    final showError =
+                        snapshot.hasError && _cachedSections.isEmpty;
 
-                    return RefreshIndicator(
-                      color: AppColors.accent,
-                      backgroundColor: AppColors.surface,
-                      onRefresh: _refresh,
-                      child: CustomScrollView(
-                        physics: const AlwaysScrollableScrollPhysics(
-                          parent: BouncingScrollPhysics(),
-                        ),
-                        slivers: <Widget>[
-                          SliverToBoxAdapter(
-                            child: HeroCarousel(
-                              items: _heroItems(sections),
-                              onPlay: _play,
-                              onInfo: (item) => context.push(
-                                '/detail/${item.type}/${Uri.encodeComponent(item.id)}',
+                    return ContentSwitcher(
+                      stateKey: 'home-content',
+                      child: RefreshIndicator(
+                        color: AppColors.accent,
+                        backgroundColor: AppColors.surface,
+                        onRefresh: _refresh,
+                        child: CustomScrollView(
+                          physics: const AlwaysScrollableScrollPhysics(
+                            parent: BouncingScrollPhysics(),
+                          ),
+                          slivers: <Widget>[
+                            if (showError)
+                              SliverToBoxAdapter(
+                                child: _loadErrorBanner(snapshot.error),
+                              ),
+                            SliverToBoxAdapter(
+                              child: HeroCarousel(
+                                items: _heroItems(sections),
+                                onPlay: _play,
+                                onInfo: (item) => context.push(
+                                  '/detail/${item.type}/${Uri.encodeComponent(item.id)}',
+                                ),
                               ),
                             ),
-                          ),
-                          SliverToBoxAdapter(
-                            child: _featureCards(firstRail),
-                          ),
-                          if (continueItems.isNotEmpty)
+                            SliverToBoxAdapter(
+                              child: _featureCards(firstRail),
+                            ),
+                            if (continueItems.isNotEmpty)
+                              SliverToBoxAdapter(
+                                child: SectionRail(
+                                  title: 'Continue watching',
+                                  subtitle: 'Jump back in',
+                                  items: continueItems,
+                                  onTap: _play,
+                                ),
+                              ),
+                            SliverToBoxAdapter(child: _categoryRow()),
                             SliverToBoxAdapter(
                               child: SectionRail(
-                                title: 'Continue watching',
-                                subtitle: 'Jump back in',
-                                items: continueItems,
+                                title: 'Trending Now',
+                                subtitle: 'Popular on Flix4U ${_channelLabel()}',
+                                items: firstRail,
+                                onSeeAll: () => context.push(
+                                  '/category/${_sectionOrder.first}?channel=${Uri.encodeComponent(_channel)}',
+                                ),
                                 onTap: _play,
                               ),
                             ),
-                          SliverToBoxAdapter(child: _categoryRow()),
-                          SliverToBoxAdapter(
-                            child: SectionRail(
-                              title: 'Trending Now',
-                              subtitle: 'Popular on Flix4U ${_channelLabel()}',
-                              items: firstRail,
-                              onSeeAll: () => context.push(
-                                '/category/${_sectionOrder.first}?channel=${Uri.encodeComponent(_channel)}',
+                            SliverToBoxAdapter(
+                              child: SectionRail(
+                                title: 'Trending Now',
+                                subtitle: 'More to explore',
+                                items: secondRail,
+                                onSeeAll: () => context.push(
+                                  '/category/${_sectionOrder.last}?channel=${Uri.encodeComponent(_channel)}',
+                                ),
+                                onTap: _play,
                               ),
-                              onTap: _play,
                             ),
-                          ),
-                          SliverToBoxAdapter(
-                            child: SectionRail(
-                              title: 'Trending Now',
-                              subtitle: 'More to explore',
-                              items: secondRail,
-                              onSeeAll: () => context.push(
-                                '/category/${_sectionOrder.last}?channel=${Uri.encodeComponent(_channel)}',
-                              ),
-                              onTap: _play,
-                            ),
-                          ),
-                          const SliverToBoxAdapter(child: SizedBox(height: 24)),
-                        ],
+                            const SliverToBoxAdapter(child: SizedBox(height: 24)),
+                          ],
+                        ),
                       ),
                     );
                   },
@@ -276,6 +302,37 @@ class _HomePageState extends State<HomePage> {
   String _channelLabel() {
     if (_channel == 'Channel') return '';
     return '· $_channel';
+  }
+
+  Widget _loadErrorBanner(Object? error) {
+    final message = error?.toString().replaceFirst('Exception: ', '') ?? '';
+    return Container(
+      margin: const EdgeInsets.fromLTRB(13, 10, 13, 0),
+      padding: const EdgeInsets.fromLTRB(12, 8, 6, 8),
+      decoration: BoxDecoration(
+        color: AppColors.surface,
+        borderRadius: BorderRadius.circular(10),
+        border: Border.all(color: AppColors.step4.withOpacity(0.60)),
+      ),
+      child: Row(
+        children: <Widget>[
+          const Icon(Icons.info_outline_rounded,
+              size: 18, color: AppColors.accentSoft),
+          const SizedBox(width: 9),
+          Expanded(
+            child: Text(
+              message.isEmpty
+                  ? 'Could not refresh the catalog. Showing saved titles.'
+                  : 'Could not refresh: $message',
+              maxLines: 2,
+              overflow: TextOverflow.ellipsis,
+              style: const TextStyle(color: AppColors.text, fontSize: 12),
+            ),
+          ),
+          TextButton(onPressed: _refresh, child: const Text('Retry')),
+        ],
+      ),
+    );
   }
 
   Widget _topArea() {

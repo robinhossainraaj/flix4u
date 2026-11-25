@@ -10,6 +10,7 @@ import '../../data/repositories/catalog_repository.dart';
 import '../../data/repositories/stream_repository.dart';
 import '../../theme/app_theme.dart';
 import '../../widgets/app_bottom_nav.dart';
+import '../../widgets/skeleton_loading.dart';
 
 class ShortTvPage extends StatefulWidget {
   const ShortTvPage({super.key});
@@ -28,6 +29,7 @@ class _ShortTvPageState extends State<ShortTvPage> {
   int _generation = 0;
   bool _loadingList = true;
   bool _loadingVideo = false;
+  String? _listError;
   String? _videoError;
   VideoPlayerController? _controller;
 
@@ -42,13 +44,29 @@ class _ShortTvPageState extends State<ShortTvPage> {
       final sections = await _catalog.loadHome();
       var items = sections['shorts'] ?? const <MediaItem>[];
       if (items.isEmpty) items = sections['trending'] ?? const <MediaItem>[];
-      if (mounted) setState(() => _items = items.take(20).toList());
+      if (mounted) {
+        setState(() {
+          _items = items.take(20).toList();
+          _listError = null;
+        });
+      }
       _startVideo(0);
-    } catch (_) {
-      // Keep the empty state.
+    } catch (error) {
+      if (mounted) {
+        setState(() => _listError = error.toString().replaceFirst('Exception: ', ''));
+      }
     } finally {
       if (mounted) setState(() => _loadingList = false);
     }
+  }
+
+  void _retryLoad() {
+    setState(() {
+      _loadingList = true;
+      _listError = null;
+      _items = const <MediaItem>[];
+    });
+    _load();
   }
 
   Future<void> _startVideo(int index) async {
@@ -155,47 +173,63 @@ class _ShortTvPageState extends State<ShortTvPage> {
       body: Stack(
         children: <Widget>[
           if (_loadingList)
-            const Center(
-              child: CircularProgressIndicator(color: AppColors.accent),
+            const ContentSwitcher(
+              stateKey: 'shorttv-loading',
+              child: ShortTvSkeleton(),
+            )
+          else if (_listError != null)
+            ContentSwitcher(
+              stateKey: 'shorttv-error',
+              child: SkeletonErrorState(
+                title: 'Could not load ShortTV',
+                message: _listError!,
+                onRetry: _retryLoad,
+              ),
             )
           else if (_items.isEmpty)
-            Center(
-              child: Padding(
-                padding: const EdgeInsets.all(28),
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  children: <Widget>[
-                    const Icon(
-                      Icons.smart_display_rounded,
-                      size: 56,
-                      color: AppColors.accentSoft,
-                    ),
-                    const SizedBox(height: 12),
-                    const Text(
-                      'No short videos available right now.',
-                      textAlign: TextAlign.center,
-                      style: TextStyle(color: AppColors.text, fontSize: 16),
-                    ),
-                    const SizedBox(height: 14),
-                    FilledButton(
-                      onPressed: () => context.go('/'),
-                      child: const Text('Back to Home'),
-                    ),
-                  ],
+            ContentSwitcher(
+              stateKey: 'shorttv-empty',
+              child: Center(
+                child: Padding(
+                  padding: const EdgeInsets.all(28),
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: <Widget>[
+                      const Icon(
+                        Icons.smart_display_rounded,
+                        size: 56,
+                        color: AppColors.accentSoft,
+                      ),
+                      const SizedBox(height: 12),
+                      const Text(
+                        'No short videos available right now.',
+                        textAlign: TextAlign.center,
+                        style: TextStyle(color: AppColors.text, fontSize: 16),
+                      ),
+                      const SizedBox(height: 14),
+                      FilledButton(
+                        onPressed: () => context.go('/'),
+                        child: const Text('Back to Home'),
+                      ),
+                    ],
+                  ),
                 ),
               ),
             )
           else
-            PageView.builder(
-              controller: _pageController,
-              scrollDirection: Axis.vertical,
-              itemCount: _items.length,
-              onPageChanged: (index) {
-                setState(() => _current = index);
-                _startVideo(index);
-              },
-              itemBuilder: (context, index) =>
-                  _shortPage(_items[index], index),
+            ContentSwitcher(
+              stateKey: 'shorttv-data',
+              child: PageView.builder(
+                controller: _pageController,
+                scrollDirection: Axis.vertical,
+                itemCount: _items.length,
+                onPageChanged: (index) {
+                  setState(() => _current = index);
+                  _startVideo(index);
+                },
+                itemBuilder: (context, index) =>
+                    _shortPage(_items[index], index),
+              ),
             ),
           Positioned(
             left: 0,
@@ -253,22 +287,30 @@ class _ShortTvPageState extends State<ShortTvPage> {
               child: GestureDetector(
                 onTap: _togglePlay,
                 child: Center(
-                  child: _loadingVideo
-                      ? const CircularProgressIndicator(color: AppColors.accent)
-                      : _videoError != null
-                      ? const Icon(
-                          Icons.play_circle_outline_rounded,
-                          color: AppColors.accentSoft,
-                          size: 64,
-                        )
-                      : _controller != null &&
-                            !_controller!.value.isPlaying
-                      ? const Icon(
-                          Icons.play_circle_fill_rounded,
-                          color: AppColors.accentSoft,
-                          size: 64,
-                        )
-                      : const SizedBox.shrink(),
+                  child: ContentSwitcher(
+                    stateKey: _loadingVideo
+                        ? 'video-loading'
+                        : _videoError != null
+                        ? 'video-error'
+                        : _controller != null && !_controller!.value.isPlaying
+                        ? 'video-paused'
+                        : 'video-playing',
+                    child: _loadingVideo
+                        ? const ShortVideoLoadingSkeleton()
+                        : _videoError != null
+                        ? const Icon(
+                            Icons.play_circle_outline_rounded,
+                            color: AppColors.accentSoft,
+                            size: 64,
+                          )
+                        : _controller != null && !_controller!.value.isPlaying
+                        ? const Icon(
+                            Icons.play_circle_fill_rounded,
+                            color: AppColors.accentSoft,
+                            size: 64,
+                          )
+                        : const SizedBox.shrink(),
+                  ),
                 ),
               ),
             ),

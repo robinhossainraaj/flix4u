@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 
 import '../data/models/media_item.dart';
 import '../theme/app_theme.dart';
+import 'skeleton_loading.dart';
 
 class HeroCarousel extends StatefulWidget {
   const HeroCarousel({
@@ -122,7 +123,13 @@ class _HeroCarouselState extends State<HeroCarousel> {
                   CachedNetworkImage(
                     imageUrl: imageUrl,
                     fit: BoxFit.cover,
-                    placeholder: (_, __) => const _HeroGradient(),
+                    placeholder: (_, __) => const Shimmer(
+                      child: SkeletonBox(
+                        width: double.infinity,
+                        height: 238,
+                        radius: 16,
+                      ),
+                    ),
                     errorWidget: (_, __, ___) => const _HeroGradient(),
                   )
                 else
