@@ -31,7 +31,11 @@ class StreamRepository {
     required String type,
     String? episode,
     String? title,
+    Map<String, dynamic>? extras,
   }) async {
+    final embedded = _sourceFromExtras(extras);
+    if (embedded != null && embedded.isValid) return embedded;
+
     final tmdb = _parseTmdbId(id);
     if (kCineproBaseUrl.isNotEmpty && tmdb != null && type != 'anime') {
       try {
@@ -68,6 +72,41 @@ class StreamRepository {
 
     final json = await _direct.resolveStream(id, title ?? '');
     return StreamSource.fromJson(json);
+  }
+
+  /// Catalog items generated from public APIs can carry ready-to-play direct
+  /// resources. Use them first so playback never depends on a second lookup.
+  StreamSource? _sourceFromExtras(Map<String, dynamic>? extras) {
+    if (extras == null || extras.isEmpty) return null;
+    final rawStreams = extras['streams'];
+    final sources = <Map<String, dynamic>>[];
+    if (rawStreams is List) {
+      for (final raw in rawStreams) {
+        if (raw is! Map) continue;
+        sources.add(raw.cast<String, dynamic>());
+      }
+    }
+    final directUrl = _text(extras['streamUrl']);
+    if (sources.isEmpty && directUrl.isNotEmpty) {
+      sources.add(<String, dynamic>{
+        'url': directUrl,
+        'quality': _text(extras['streamQuality'], 'Auto'),
+        'type': _text(extras['streamType'], 'mp4'),
+        'language': _text(extras['streamLanguage'], 'Original'),
+      });
+    }
+    if (sources.isEmpty) return null;
+
+    final referer = _text(extras['streamReferer'] ?? extras['referer']);
+    return StreamSource.fromJson(<String, dynamic>{
+      'url': _text(sources.first['url']),
+      'quality': _text(sources.first['quality'], 'Auto'),
+      'type': _text(sources.first['type'], 'mp4'),
+      'provider': _text(extras['streamProvider'], 'github-catalog'),
+      'sources': sources,
+      'headers': <String, dynamic>{'Referer': referer},
+      'subtitles': extras['subtitles'],
+    });
   }
 
   /// Accepts `tmdb:movie:123`, `tmdb:tv:123`, or a bare numeric TMDB ID.

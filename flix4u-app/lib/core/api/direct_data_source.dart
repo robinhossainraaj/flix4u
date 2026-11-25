@@ -130,7 +130,17 @@ query ($page: Int, $perPage: Int, $search: String, $id: Int, $sort: [MediaSort])
     };
     final safeQuery = query.trim().replaceAll(RegExp(r'["\\]'), ' ');
     final queryClause = safeQuery.isEmpty ? '' : ' AND ($safeQuery)';
-    final collectionClause = collection.isEmpty ? '' : 'collection:$collection AND ';
+    final resolvedCollection = collection.isNotEmpty
+        ? collection
+        : switch (type) {
+            'tv' => 'classic_tv',
+            'short' => 'short_films',
+            'music' => 'etree',
+            _ => '',
+          };
+    final collectionClause = resolvedCollection.isEmpty
+        ? ''
+        : 'collection:$resolvedCollection AND ';
     final q = '$collectionClause$base$queryClause AND format:"MPEG4"';
     final response = await _dio.get<Map<String, dynamic>>(
       '$_archive/advancedsearch.php',

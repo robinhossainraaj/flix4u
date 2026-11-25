@@ -3,6 +3,16 @@ const String kBackendBaseUrl = String.fromEnvironment(
   defaultValue: 'https://your-flix4u-backend.vercel.app',
 );
 
+/// Public, keyless catalog hosted from this repository with GitHub Pages.
+/// It is generated from Archive.org and AniList by
+/// `scripts/generate-github-catalog.mjs` and needs no API key.
+const String kGithubCatalogUrl =
+    'https://robinhossainraaj.github.io/flix4u/api/catalog.json';
+
+/// Raw fallback in case GitHub Pages has not finished publishing yet.
+const String kGithubCatalogRawUrl =
+    'https://raw.githubusercontent.com/robinhossainraaj/flix4u/main/docs/api/catalog.json';
+
 /// Optional self-hosted CinePro Core URL.
 ///
 /// When set, TMDB-backed items can resolve streams directly from an OMSS

@@ -61,6 +61,7 @@ Future<void> playMedia(
       type: item.type,
       title: item.title,
       episode: episode,
+      extras: item.extras,
     );
 
     if (!context.mounted) return;

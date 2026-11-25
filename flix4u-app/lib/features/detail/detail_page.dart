@@ -94,6 +94,7 @@ class _DetailPageState extends State<DetailPage> {
       id: item.id,
       type: item.type,
       title: item.title,
+      extras: item.extras,
     );
     if (mounted) setState(() => _stream = source);
     return source;

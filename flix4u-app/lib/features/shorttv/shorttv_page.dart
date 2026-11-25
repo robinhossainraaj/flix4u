@@ -84,6 +84,7 @@ class _ShortTvPageState extends State<ShortTvPage> {
         id: item.id,
         type: item.type,
         title: item.title,
+        extras: item.extras,
       );
       final option = source.preferred;
       if (option == null) throw StateError('No public short video found.');
