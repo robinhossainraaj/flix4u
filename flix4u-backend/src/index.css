@@ -1,0 +1,990 @@
+@import "tailwindcss";
+
+@theme {
+  --font-display: "Outfit", system-ui, sans-serif;
+  --font-sans: "Plus Jakarta Sans", system-ui, sans-serif;
+  --font-mono: "JetBrains Mono", ui-monospace, monospace;
+}
+
+@layer base {
+  :root,
+  html[data-theme="midnight-purple"] {
+    color-scheme: dark;
+    --theme-bg: #07080d;
+    --theme-surface: #10121c;
+    --theme-surface-glass: rgba(16, 18, 28, 0.74);
+    --theme-accent-from: #8b5cf6;
+    --theme-accent-to: #6d28d9;
+    --theme-accent-rgb: 139, 92, 246;
+    --theme-accent-border: rgba(221, 214, 254, 0.3);
+    --theme-glow: rgba(139, 92, 246, 0.48);
+    --theme-halo: rgba(109, 40, 217, 0.42);
+    --theme-orb-from: #a855f7;
+    --theme-orb-mid: #7c3aed;
+    --theme-orb-to: #5b21b6;
+    --theme-orb-border: rgba(233, 213, 255, 0.42);
+  }
+
+  html[data-theme="deep-black"] {
+    --theme-bg: #07080b;
+    --theme-surface: #111319;
+    --theme-surface-glass: rgba(17, 19, 25, 0.78);
+    --theme-accent-from: #71717a;
+    --theme-accent-to: #3f3f46;
+    --theme-accent-rgb: 113, 113, 122;
+    --theme-accent-border: rgba(255, 255, 255, 0.28);
+    --theme-glow: rgba(161, 161, 170, 0.35);
+    --theme-halo: rgba(63, 63, 70, 0.45);
+    --theme-orb-from: #a1a1aa;
+    --theme-orb-mid: #71717a;
+    --theme-orb-to: #3f3f46;
+    --theme-orb-border: rgba(255, 255, 255, 0.35);
+  }
+
+  html[data-theme="ocean-blue"] {
+    --theme-bg: #030814;
+    --theme-surface: #081528;
+    --theme-surface-glass: rgba(8, 21, 40, 0.78);
+    --theme-accent-from: #38bdf8;
+    --theme-accent-to: #0284c7;
+    --theme-accent-rgb: 14, 165, 233;
+    --theme-accent-border: rgba(186, 230, 253, 0.35);
+    --theme-glow: rgba(14, 165, 233, 0.52);
+    --theme-halo: rgba(2, 132, 199, 0.45);
+    --theme-orb-from: #38bdf8;
+    --theme-orb-mid: #0284c7;
+    --theme-orb-to: #0369a1;
+    --theme-orb-border: rgba(186, 230, 253, 0.45);
+  }
+
+  html[data-theme="crimson-red"] {
+    --theme-bg: #0b0407;
+    --theme-surface: #1a0b12;
+    --theme-surface-glass: rgba(26, 11, 18, 0.78);
+    --theme-accent-from: #fb7185;
+    --theme-accent-to: #e11d48;
+    --theme-accent-rgb: 244, 63, 94;
+    --theme-accent-border: rgba(254, 205, 211, 0.35);
+    --theme-glow: rgba(244, 63, 94, 0.52);
+    --theme-halo: rgba(225, 29, 72, 0.45);
+    --theme-orb-from: #fb7185;
+    --theme-orb-mid: #e11d48;
+    --theme-orb-to: #9f1239;
+    --theme-orb-border: rgba(254, 205, 211, 0.45);
+  }
+
+  html[data-theme="emerald-green"] {
+    --theme-bg: #030c08;
+    --theme-surface: #071c13;
+    --theme-surface-glass: rgba(7, 28, 19, 0.78);
+    --theme-accent-from: #34d399;
+    --theme-accent-to: #059669;
+    --theme-accent-rgb: 16, 185, 129;
+    --theme-accent-border: rgba(167, 243, 208, 0.35);
+    --theme-glow: rgba(16, 185, 129, 0.5);
+    --theme-halo: rgba(5, 150, 105, 0.45);
+    --theme-orb-from: #34d399;
+    --theme-orb-mid: #059669;
+    --theme-orb-to: #047857;
+    --theme-orb-border: rgba(167, 243, 208, 0.45);
+  }
+
+  html[data-theme="rose-pink"] {
+    --theme-bg: #0a0409;
+    --theme-surface: #1a0b17;
+    --theme-surface-glass: rgba(26, 11, 23, 0.78);
+    --theme-accent-from: #f472b6;
+    --theme-accent-to: #db2777;
+    --theme-accent-rgb: 236, 72, 153;
+    --theme-accent-border: rgba(251, 207, 232, 0.35);
+    --theme-glow: rgba(236, 72, 153, 0.52);
+    --theme-halo: rgba(219, 39, 119, 0.45);
+    --theme-orb-from: #f472b6;
+    --theme-orb-mid: #db2777;
+    --theme-orb-to: #9d174d;
+    --theme-orb-border: rgba(251, 207, 232, 0.45);
+  }
+
+  html[data-theme="amoled-black"] {
+    --theme-bg: #000000;
+    --theme-surface: #0a0a0a;
+    --theme-surface-glass: rgba(10, 10, 10, 0.88);
+    --theme-accent-from: #c084fc;
+    --theme-accent-to: #9333ea;
+    --theme-accent-rgb: 192, 132, 252;
+    --theme-accent-border: rgba(233, 213, 255, 0.35);
+    --theme-glow: rgba(192, 132, 252, 0.45);
+    --theme-halo: rgba(147, 51, 234, 0.45);
+    --theme-orb-from: #c084fc;
+    --theme-orb-mid: #9333ea;
+    --theme-orb-to: #6b21a8;
+    --theme-orb-border: rgba(233, 213, 255, 0.45);
+  }
+
+  html,
+  body {
+    background-color: var(--theme-bg, #07080d);
+    color: #f1f5f9;
+    font-family: var(--font-sans);
+    -webkit-tap-highlight-color: transparent;
+    transition: background-color 220ms ease, color 220ms ease;
+  }
+
+  h1,
+  h2,
+  h3,
+  h4 {
+    font-family: var(--font-display);
+  }
+}
+
+.tabular-nums {
+  font-variant-numeric: tabular-nums;
+}
+
+/* Lightweight GPU-safe page entrance compatible with Android System WebView */
+@keyframes kuroPageEnter {
+  from {
+    opacity: 0.92;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+.kuro-page-enter {
+  animation: kuroPageEnter 140ms ease-out;
+}
+
+.kuro-content-auto {
+  content-visibility: auto;
+  contain-intrinsic-size: auto 340px;
+}
+
+/* iOS 26 inspired dark frosted glass surface */
+.kuro-glass {
+  background: var(--theme-surface-glass, rgba(16, 18, 28, 0.74));
+  backdrop-filter: blur(22px) saturate(140%);
+  -webkit-backdrop-filter: blur(22px) saturate(140%);
+  border: 1px solid rgba(255, 255, 255, 0.11);
+}
+
+.kuro-glass-elevated {
+  background: var(--theme-surface-glass, rgba(14, 16, 26, 0.86));
+  backdrop-filter: blur(28px) saturate(150%);
+  -webkit-backdrop-filter: blur(28px) saturate(150%);
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  box-shadow: 0 24px 64px -16px rgba(0, 0, 0, 0.72), inset 0 1px 0 rgba(255, 255, 255, 0.1);
+}
+
+@media (max-width: 768px) {
+  .kuro-glass,
+  .kuro-glass-elevated,
+  .kuro-btn-glass,
+  .kuro-btn-active,
+  .kuro-dock-pill {
+    backdrop-filter: blur(12px) saturate(130%);
+    -webkit-backdrop-filter: blur(12px) saturate(130%);
+  }
+}
+
+/* Tactile iOS-inspired Button Depth System (GPU-friendly for Android & desktop) */
+.kuro-btn-primary {
+  background: linear-gradient(180deg, var(--theme-accent-from, #8b5cf6) 0%, var(--theme-accent-to, #6d28d9) 100%);
+  border: 1px solid var(--theme-accent-border, rgba(221, 214, 254, 0.3));
+  color: #ffffff;
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.28),
+    inset 0 -1px 0 rgba(0, 0, 0, 0.24),
+    0 6px 16px -4px var(--theme-halo, rgba(109, 40, 217, 0.42)),
+    0 2px 4px rgba(0, 0, 0, 0.35);
+  transition: transform 140ms cubic-bezier(0.2, 0.8, 0.2, 1), filter 140ms ease, box-shadow 140ms ease;
+}
+
+.kuro-btn-primary:hover:not(:disabled) {
+  filter: brightness(1.07);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.34),
+    inset 0 -1px 0 rgba(0, 0, 0, 0.24),
+    0 10px 20px -4px var(--theme-glow, rgba(109, 40, 217, 0.5)),
+    0 3px 6px rgba(0, 0, 0, 0.38);
+}
+
+.kuro-btn-primary:active:not(:disabled) {
+  transform: scale(0.97) translate3d(0, 0.5px, 0);
+  filter: brightness(0.96);
+  box-shadow:
+    inset 0 2px 5px rgba(0, 0, 0, 0.34),
+    0 1px 2px rgba(0, 0, 0, 0.35);
+}
+
+.kuro-btn-glass {
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.085) 0%, rgba(255, 255, 255, 0.03) 100%);
+  backdrop-filter: blur(18px) saturate(135%);
+  -webkit-backdrop-filter: blur(18px) saturate(135%);
+  border: 1px solid rgba(255, 255, 255, 0.13);
+  color: #e2e8f0;
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.14),
+    0 4px 12px -2px rgba(0, 0, 0, 0.45);
+  transition: transform 140ms cubic-bezier(0.2, 0.8, 0.2, 1), border-color 140ms ease, background 140ms ease, color 140ms ease, box-shadow 140ms ease;
+}
+
+.kuro-btn-glass:hover:not(:disabled) {
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.125) 0%, rgba(255, 255, 255, 0.05) 100%);
+  border-color: var(--theme-accent-border, rgba(167, 139, 250, 0.4));
+  color: #ffffff;
+}
+
+.kuro-btn-glass:active:not(:disabled) {
+  transform: scale(0.97) translate3d(0, 0.5px, 0);
+  box-shadow:
+    inset 0 2px 4px rgba(0, 0, 0, 0.45),
+    0 1px 2px rgba(0, 0, 0, 0.35);
+}
+
+.kuro-btn-active {
+  background: linear-gradient(180deg, rgba(var(--theme-accent-rgb, 139, 92, 246), 0.32) 0%, rgba(var(--theme-accent-rgb, 109, 40, 217), 0.2) 100%);
+  backdrop-filter: blur(18px) saturate(140%);
+  -webkit-backdrop-filter: blur(18px) saturate(140%);
+  border: 1px solid var(--theme-accent-border, rgba(167, 139, 250, 0.55));
+  color: #ffffff;
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.26),
+    0 4px 14px -3px var(--theme-halo, rgba(109, 40, 217, 0.36));
+  transition: transform 140ms cubic-bezier(0.2, 0.8, 0.2, 1), background 140ms ease, border-color 140ms ease, box-shadow 140ms ease;
+}
+
+.kuro-btn-active:active:not(:disabled) {
+  transform: scale(0.97) translate3d(0, 0.5px, 0);
+  box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.38);
+}
+
+.kuro-segment-track {
+  background: rgba(9, 11, 18, 0.86);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  box-shadow: inset 0 2px 5px rgba(0, 0, 0, 0.5);
+}
+
+.kuro-segment-active {
+  background: linear-gradient(180deg, var(--theme-accent-from, #8b5cf6) 0%, var(--theme-accent-to, #6d28d9) 100%);
+  border: 1px solid var(--theme-accent-border, rgba(221, 214, 254, 0.28));
+  color: #ffffff;
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.26),
+    0 3px 10px -2px var(--theme-halo, rgba(109, 40, 217, 0.45));
+  transition: transform 140ms cubic-bezier(0.2, 0.8, 0.2, 1), filter 140ms ease;
+}
+
+.kuro-segment-active:active:not(:disabled) {
+  transform: scale(0.97);
+}
+
+.kuro-segment-amber {
+  background: linear-gradient(180deg, #fbbf24 0%, #d97706 100%);
+  border: 1px solid rgba(254, 243, 199, 0.35);
+  color: #07080d;
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.4),
+    0 3px 10px -2px rgba(217, 119, 6, 0.35);
+  transition: transform 140ms cubic-bezier(0.2, 0.8, 0.2, 1), filter 140ms ease;
+}
+
+.kuro-segment-amber:active:not(:disabled) {
+  transform: scale(0.97);
+}
+
+.kuro-segment-idle {
+  border: 1px solid transparent;
+  color: #94a3b8;
+  transition: transform 140ms cubic-bezier(0.2, 0.8, 0.2, 1), color 140ms ease, background-color 140ms ease;
+}
+
+.kuro-segment-idle:hover:not(:disabled) {
+  color: #f8fafc;
+  background: rgba(255, 255, 255, 0.05);
+}
+
+.kuro-segment-idle:active:not(:disabled) {
+  transform: scale(0.97);
+}
+
+/* Floating Black Pill Bottom Navigation Dock */
+.kuro-dock-pill {
+  background: linear-gradient(180deg, rgba(16, 17, 24, 0.96) 0%, rgba(6, 7, 11, 0.98) 100%);
+  backdrop-filter: blur(22px) saturate(140%);
+  -webkit-backdrop-filter: blur(22px) saturate(140%);
+  border: 1px solid rgba(255, 255, 255, 0.095);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.085),
+    inset 0 -1px 0 rgba(0, 0, 0, 0.55),
+    0 20px 44px -10px rgba(0, 0, 0, 0.9),
+    0 6px 18px -4px rgba(0, 0, 0, 0.65);
+}
+
+.kuro-dock-orb-idle {
+  background: linear-gradient(180deg, #13151e 0%, #090a0f 100%);
+  border: 1px solid rgba(255, 255, 255, 0.065);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.05),
+    inset 0 -1px 2px rgba(0, 0, 0, 0.55),
+    0 2px 6px rgba(0, 0, 0, 0.55);
+  transition: border-color 160ms ease, background 160ms ease;
+}
+
+.kuro-dock-orb-active {
+  background: linear-gradient(145deg, var(--theme-orb-from, #a855f7) 0%, var(--theme-orb-mid, #7c3aed) 52%, var(--theme-orb-to, #5b21b6) 100%);
+  border: 1px solid var(--theme-orb-border, rgba(233, 213, 255, 0.42));
+  box-shadow:
+    inset 0 1px 1px rgba(255, 255, 255, 0.36),
+    inset 0 -2px 4px rgba(0, 0, 0, 0.48),
+    0 0 18px 1px var(--theme-glow, rgba(139, 92, 246, 0.48)),
+    0 6px 14px -2px var(--theme-halo, rgba(76, 29, 149, 0.62));
+}
+
+/* Hide scrollbars cleanly for horizontal poster carousels */
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+
+.no-scrollbar {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+
+/* Refined dark scrollbar */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: #07080d;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #232634;
+  border-radius: 9999px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #4c1d95;
+}
+
+/* Cinematic 4-second startup splash intro animations (GPU-composited transform & opacity) */
+@keyframes kuroSplashAtmosphere {
+  0% {
+    opacity: 0;
+    transform: scale(0.92);
+  }
+  18% {
+    opacity: 0.72;
+    transform: scale(1);
+  }
+  62% {
+    opacity: 0.95;
+    transform: scale(1.05);
+  }
+  85% {
+    opacity: 0.75;
+    transform: scale(1.02);
+  }
+  100% {
+    opacity: 0;
+    transform: scale(1);
+  }
+}
+
+@keyframes kuroSplashSweep {
+  0% {
+    opacity: 0;
+    transform: translate3d(-120%, 0, 0);
+  }
+  20% {
+    opacity: 0.85;
+  }
+  55% {
+    opacity: 0.95;
+  }
+  100% {
+    opacity: 0;
+    transform: translate3d(120%, 0, 0);
+  }
+}
+
+@keyframes kuroSplashLogoReveal {
+  0% {
+    opacity: 0;
+    transform: translate3d(0, 12px, 0) scale(0.84);
+  }
+  68% {
+    opacity: 1;
+    transform: translate3d(0, -1px, 0) scale(1.015);
+  }
+  100% {
+    opacity: 1;
+    transform: translate3d(0, 0, 0) scale(1);
+  }
+}
+
+@keyframes kuroSplashLogoReduced {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes kuroSplashHalo {
+  0% {
+    opacity: 0;
+    transform: scale(0.86);
+  }
+  32% {
+    opacity: 0.92;
+    transform: scale(1.06);
+  }
+  68% {
+    opacity: 0.68;
+    transform: scale(1.01);
+  }
+  100% {
+    opacity: 0.18;
+    transform: scale(0.96);
+  }
+}
+
+@keyframes kuroSplashPlayPulse {
+  0% {
+    opacity: 0;
+    transform: scale(0.72);
+  }
+  42% {
+    opacity: 0.92;
+    transform: scale(1.22);
+  }
+  100% {
+    opacity: 0;
+    transform: scale(0.96);
+  }
+}
+
+@keyframes kuroSplashParticle {
+  0% {
+    opacity: 0;
+    transform: translate3d(0, 14px, 0) scale(0.45);
+  }
+  22% {
+    opacity: 0.92;
+  }
+  78% {
+    opacity: 0.55;
+  }
+  100% {
+    opacity: 0;
+    transform: translate3d(10px, -115px, 0) scale(1.08);
+  }
+}
+
+@keyframes kuroSplashRingParticle {
+  0% {
+    opacity: 0;
+    transform: translate3d(0, 0, 0) scale(0.5);
+  }
+  30% {
+    opacity: 0.95;
+    transform: translate3d(calc(var(--tx, 18px) * 0.45), calc(var(--ty, -18px) * 0.45), 0) scale(1.05);
+  }
+  100% {
+    opacity: 0;
+    transform: translate3d(var(--tx, 18px), var(--ty, -18px), 0) scale(0.65);
+  }
+}
+
+@keyframes kuroSplashTagline {
+  0% {
+    opacity: 0;
+    transform: translate3d(0, 10px, 0);
+  }
+  100% {
+    opacity: 1;
+    transform: translate3d(0, 0, 0);
+  }
+}
+
+@keyframes kuroSplashExit {
+  from {
+    opacity: 1;
+    transform: scale(1);
+  }
+  to {
+    opacity: 0;
+    transform: scale(1.025);
+  }
+}
+
+.kuro-splash-atmosphere {
+  will-change: transform, opacity;
+  animation: kuroSplashAtmosphere 1050ms cubic-bezier(0.22, 1, 0.36, 1) forwards;
+}
+
+.kuro-splash-sweep {
+  will-change: transform, opacity;
+  animation: kuroSplashSweep 520ms cubic-bezier(0.25, 1, 0.5, 1) 80ms both;
+}
+
+.kuro-splash-logo-reveal {
+  will-change: transform, opacity;
+  animation: kuroSplashLogoReveal 420ms cubic-bezier(0.16, 1, 0.3, 1) 60ms both;
+}
+
+.kuro-splash-logo-reduced {
+  animation: kuroSplashLogoReduced 200ms ease-out both;
+}
+
+.kuro-splash-halo {
+  will-change: transform, opacity;
+  animation: kuroSplashHalo 650ms cubic-bezier(0.22, 1, 0.36, 1) 180ms both;
+}
+
+.kuro-splash-play-pulse {
+  will-change: transform, opacity;
+  animation: kuroSplashPlayPulse 550ms cubic-bezier(0.16, 1, 0.3, 1) 200ms both;
+}
+
+.kuro-splash-particle {
+  will-change: transform, opacity;
+  animation-name: kuroSplashParticle;
+  animation-timing-function: cubic-bezier(0.2, 0.8, 0.2, 1);
+  animation-iteration-count: 1;
+  animation-fill-mode: both;
+}
+
+.kuro-splash-ring-particle {
+  will-change: transform, opacity;
+  animation-name: kuroSplashRingParticle;
+  animation-duration: 580ms;
+  animation-timing-function: cubic-bezier(0.16, 1, 0.3, 1);
+  animation-fill-mode: both;
+}
+
+.kuro-splash-tagline {
+  will-change: transform, opacity;
+  animation: kuroSplashTagline 360ms cubic-bezier(0.16, 1, 0.3, 1) 240ms both;
+}
+
+.kuro-splash-tagline-reduced {
+  animation: kuroSplashLogoReduced 200ms ease-out 60ms both;
+}
+
+.kuro-splash-exit {
+  will-change: transform, opacity;
+  animation: kuroSplashExit 340ms cubic-bezier(0.22, 1, 0.36, 1) forwards;
+}
+
+/* iOS 26-inspired Login Page Animations (GPU-composited transform & opacity only) */
+@keyframes kuroAuthBackdropEnter {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes kuroAuthCardEnter {
+  0% {
+    opacity: 0;
+    transform: translate3d(0, 18px, 0) scale(0.965);
+  }
+  100% {
+    opacity: 1;
+    transform: translate3d(0, 0, 0) scale(1);
+  }
+}
+
+@keyframes kuroAuthLogoEnter {
+  0% {
+    opacity: 0;
+    transform: translate3d(0, 10px, 0) scale(0.86);
+  }
+  70% {
+    opacity: 1;
+    transform: translate3d(0, -1px, 0) scale(1.02);
+  }
+  100% {
+    opacity: 1;
+    transform: translate3d(0, 0, 0) scale(1);
+  }
+}
+
+@keyframes kuroAuthOrbFloat {
+  0%,
+  100% {
+    opacity: 0.72;
+    transform: translate3d(0, 0, 0) scale(1);
+  }
+  50% {
+    opacity: 0.95;
+    transform: translate3d(8px, -10px, 0) scale(1.06);
+  }
+}
+
+@keyframes kuroAuthParticleDrift {
+  0% {
+    opacity: 0;
+    transform: translate3d(0, 12px, 0) scale(0.6);
+  }
+  20% {
+    opacity: 0.85;
+  }
+  80% {
+    opacity: 0.45;
+  }
+  100% {
+    opacity: 0;
+    transform: translate3d(var(--drift-x, 12px), -78px, 0) scale(1.05);
+  }
+}
+
+@keyframes kuroAuthTabPanelEnter {
+  0% {
+    opacity: 0;
+    transform: translate3d(0, 8px, 0);
+  }
+  100% {
+    opacity: 1;
+    transform: translate3d(0, 0, 0);
+  }
+}
+
+@keyframes kuroAuthFeedbackEnter {
+  0% {
+    opacity: 0;
+    transform: translate3d(0, -6px, 0) scale(0.985);
+  }
+  100% {
+    opacity: 1;
+    transform: translate3d(0, 0, 0) scale(1);
+  }
+}
+
+@keyframes kuroAuthCtaSheen {
+  0% {
+    transform: translate3d(-135%, 0, 0) skewX(-18deg);
+  }
+  45%,
+  100% {
+    transform: translate3d(235%, 0, 0) skewX(-18deg);
+  }
+}
+
+.kuro-auth-backdrop-enter {
+  animation: kuroAuthBackdropEnter 240ms ease-out both;
+}
+
+.kuro-auth-card {
+  background: linear-gradient(165deg, rgba(18, 12, 32, 0.84) 0%, rgba(9, 7, 16, 0.9) 100%);
+  backdrop-filter: blur(22px) saturate(145%);
+  -webkit-backdrop-filter: blur(22px) saturate(145%);
+  border: 1px solid rgba(255, 255, 255, 0.13);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.16),
+    inset 0 -1px 0 rgba(139, 92, 246, 0.12),
+    0 28px 72px -16px rgba(0, 0, 0, 0.88),
+    0 0 48px -18px rgba(139, 92, 246, 0.34),
+    0 0 36px -22px rgba(225, 29, 72, 0.28);
+}
+
+@media (max-width: 768px) {
+  .kuro-auth-card {
+    backdrop-filter: blur(14px) saturate(135%);
+    -webkit-backdrop-filter: blur(14px) saturate(135%);
+  }
+}
+
+.kuro-auth-card-enter {
+  will-change: transform, opacity;
+  animation: kuroAuthCardEnter 380ms cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+.kuro-auth-logo-enter {
+  will-change: transform, opacity;
+  animation: kuroAuthLogoEnter 480ms cubic-bezier(0.16, 1, 0.3, 1) 70ms both;
+}
+
+.kuro-auth-orb {
+  will-change: transform, opacity;
+  animation: kuroAuthOrbFloat 8s ease-in-out infinite;
+}
+
+.kuro-auth-particle {
+  will-change: transform, opacity;
+  animation-name: kuroAuthParticleDrift;
+  animation-timing-function: cubic-bezier(0.22, 0.61, 0.36, 1);
+  animation-iteration-count: infinite;
+}
+
+.kuro-auth-tab-panel {
+  will-change: transform, opacity;
+  animation: kuroAuthTabPanelEnter 240ms cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+.kuro-auth-feedback-enter {
+  will-change: transform, opacity;
+  animation: kuroAuthFeedbackEnter 220ms cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+.kuro-auth-cta {
+  background: linear-gradient(135deg, #8b5cf6 0%, #7c3aed 52%, #be123c 100%);
+  border: 1px solid rgba(233, 213, 255, 0.34);
+  color: #ffffff;
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.3),
+    inset 0 -1px 0 rgba(0, 0, 0, 0.28),
+    0 12px 28px -8px rgba(139, 92, 246, 0.56),
+    0 6px 18px -8px rgba(225, 29, 72, 0.42);
+  transition: transform 150ms cubic-bezier(0.2, 0.8, 0.2, 1), filter 150ms ease, box-shadow 150ms ease;
+}
+
+.kuro-auth-cta:hover:not(:disabled) {
+  filter: brightness(1.07);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.38),
+    inset 0 -1px 0 rgba(0, 0, 0, 0.28),
+    0 16px 34px -8px rgba(168, 85, 247, 0.65),
+    0 8px 22px -8px rgba(244, 63, 94, 0.5);
+}
+
+.kuro-auth-cta:active:not(:disabled) {
+  transform: scale(0.98) translate3d(0, 1px, 0);
+  filter: brightness(0.97);
+}
+
+.kuro-auth-cta-sheen {
+  will-change: transform;
+  animation: kuroAuthCtaSheen 4.4s cubic-bezier(0.22, 1, 0.36, 1) 600ms infinite;
+}
+
+.kuro-auth-google-btn {
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.96) 0%, rgba(241, 245, 249, 0.92) 100%);
+  border: 1px solid rgba(255, 255, 255, 0.75);
+  color: #0f172a;
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 1),
+    0 8px 22px -8px rgba(0, 0, 0, 0.55);
+  transition: transform 150ms cubic-bezier(0.2, 0.8, 0.2, 1), filter 150ms ease, box-shadow 150ms ease;
+}
+
+.kuro-auth-google-btn:hover:not(:disabled) {
+  filter: brightness(1.02);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 1),
+    0 12px 26px -8px rgba(139, 92, 246, 0.32);
+}
+
+.kuro-auth-google-btn:active:not(:disabled) {
+  transform: scale(0.98) translate3d(0, 1px, 0);
+}
+
+/* Video Player VPN Notice Banner (iOS 26 Dark Amber Glassmorphism, GPU-composited) */
+@keyframes kuroVpnBannerEnter {
+  0% {
+    opacity: 0;
+    transform: translate3d(0, 6px, 0);
+  }
+  100% {
+    opacity: 1;
+    transform: translate3d(0, 0, 0);
+  }
+}
+
+@keyframes kuroVpnNoticePulse {
+  0%,
+  100% {
+    opacity: 0.5;
+    transform: scale(0.985);
+  }
+  50% {
+    opacity: 0.95;
+    transform: scale(1.03);
+  }
+}
+
+@keyframes kuroVpnIconPulse {
+  0%,
+  100% {
+    opacity: 0.88;
+    transform: scale(1);
+  }
+  50% {
+    opacity: 1;
+    transform: scale(1.06);
+  }
+}
+
+/* Facebook Community Banner Styles (iOS 26 glassmorphism + Facebook blue accent) */
+@keyframes kuroFbBannerEnter {
+  0% {
+    opacity: 0;
+    transform: translate3d(0, 8px, 0);
+  }
+  100% {
+    opacity: 1;
+    transform: translate3d(0, 0, 0);
+  }
+}
+
+@keyframes kuroFbPulse {
+  0%, 100% {
+    opacity: 0.45;
+    transform: scale(0.985);
+  }
+  50% {
+    opacity: 0.88;
+    transform: scale(1.025);
+  }
+}
+
+.kuro-fb-banner {
+  background: linear-gradient(135deg, rgba(13, 27, 52, 0.86) 0%, rgba(9, 14, 26, 0.92) 100%);
+  backdrop-filter: blur(20px) saturate(140%);
+  -webkit-backdrop-filter: blur(20px) saturate(140%);
+  border: 1px solid rgba(59, 130, 246, 0.35);
+  box-shadow:
+    inset 0 1px 0 rgba(147, 197, 253, 0.16),
+    0 16px 36px -12px rgba(37, 99, 235, 0.38),
+    0 4px 16px -6px rgba(0, 0, 0, 0.65);
+  animation: kuroFbBannerEnter 280ms cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+@media (max-width: 768px) {
+  .kuro-fb-banner {
+    backdrop-filter: blur(12px) saturate(130%);
+    -webkit-backdrop-filter: blur(12px) saturate(130%);
+  }
+}
+
+.kuro-fb-banner-glow {
+  will-change: transform, opacity;
+  animation: kuroFbPulse 3.2s ease-in-out infinite;
+}
+
+.kuro-vpn-notice {
+  background: linear-gradient(135deg, rgba(24, 17, 9, 0.84) 0%, rgba(11, 12, 20, 0.9) 100%);
+  backdrop-filter: blur(18px) saturate(140%);
+  -webkit-backdrop-filter: blur(18px) saturate(140%);
+  border: 1px solid rgba(251, 191, 36, 0.34);
+  box-shadow:
+    inset 0 1px 0 rgba(254, 243, 199, 0.14),
+    0 12px 32px -14px rgba(245, 158, 11, 0.42),
+    0 4px 16px -6px rgba(0, 0, 0, 0.65);
+  animation: kuroVpnBannerEnter 260ms cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+@media (max-width: 768px) {
+  .kuro-vpn-notice {
+    backdrop-filter: blur(12px) saturate(130%);
+    -webkit-backdrop-filter: blur(12px) saturate(130%);
+  }
+}
+
+.kuro-vpn-notice-glow {
+  will-change: transform, opacity;
+  animation: kuroVpnNoticePulse 2.8s ease-in-out infinite;
+}
+
+.kuro-vpn-icon-pulse {
+  will-change: transform, opacity;
+  animation: kuroVpnIconPulse 2.8s ease-in-out infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html {
+    scroll-behavior: auto;
+  }
+
+  .kuro-page-enter {
+    animation: none;
+  }
+
+  .kuro-splash-atmosphere,
+  .kuro-splash-sweep,
+  .kuro-splash-logo-reveal,
+  .kuro-splash-halo,
+  .kuro-splash-play-pulse,
+  .kuro-splash-particle,
+  .kuro-splash-ring-particle,
+  .kuro-splash-tagline,
+  .kuro-auth-backdrop-enter,
+  .kuro-auth-card-enter,
+  .kuro-auth-logo-enter,
+  .kuro-auth-orb,
+  .kuro-auth-particle,
+  .kuro-auth-tab-panel,
+  .kuro-auth-feedback-enter,
+  .kuro-auth-cta-sheen,
+  .kuro-fb-banner,
+  .kuro-fb-banner-glow,
+  .kuro-vpn-notice,
+  .kuro-vpn-notice-glow,
+  .kuro-vpn-icon-pulse {
+    animation: none;
+  }
+
+  .kuro-btn-primary,
+  .kuro-btn-glass,
+  .kuro-btn-active,
+  .kuro-segment-active,
+  .kuro-segment-amber,
+  .kuro-segment-idle,
+  .kuro-auth-cta,
+  .kuro-auth-google-btn {
+    transition: none;
+  }
+}
+
+/* Animated Header Logo & Brand Name */
+@keyframes kuroBrandLogoFloat {
+  0%, 100% {
+    transform: translate3d(0, 0, 0);
+  }
+  50% {
+    transform: translate3d(0, -2.5px, 0);
+  }
+}
+
+@keyframes kuroBrandGlowPulse {
+  0%, 100% {
+    box-shadow: 0 0 16px rgba(168, 85, 247, 0.45);
+  }
+  50% {
+    box-shadow: 0 0 28px rgba(168, 85, 247, 0.85);
+  }
+}
+
+@keyframes kuroBrandTextSweep {
+  0% {
+    background-position: 0% 50%;
+  }
+  50% {
+    background-position: 100% 50%;
+  }
+  100% {
+    background-position: 0% 50%;
+  }
+}
+
+.kuro-brand-logo {
+  box-shadow: 0 0 18px rgba(168, 85, 247, 0.52);
+}
+
+.kuro-brand-text {
+  background: linear-gradient(90deg, #ffffff 0%, #d8b4fe 30%, #f0abfc 65%, #ffffff 100%);
+  color: transparent;
+  -webkit-background-clip: text;
+  background-clip: text;
+  text-shadow: 0 0 18px rgba(168, 85, 247, 0.3);
+}
+

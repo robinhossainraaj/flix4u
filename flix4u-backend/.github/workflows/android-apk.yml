@@ -1,0 +1,236 @@
+name: Build Flix4U Android Debug APK
+
+on:
+  push:
+    branches:
+      - main
+      - master
+  pull_request:
+    branches:
+      - main
+      - master
+  workflow_dispatch:
+    inputs:
+      backend_api_url:
+        description: 'Optional Vercel/Express backend origin for /api/* routes (e.g. https://your-flix4u-backend.vercel.app)'
+        required: false
+        default: 'https://your-flix4u-backend.vercel.app'
+        type: string
+
+permissions:
+  contents: read
+
+jobs:
+  build-android-debug-apk:
+    name: Build Debug APK
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js 22
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: 'npm'
+
+      - name: Set up Java 21
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'temurin'
+          java-version: '21'
+
+      - name: Set up Android SDK
+        uses: android-actions/setup-android@v3
+        with:
+          packages: 'platforms;android-36 build-tools;36.0.0 build-tools;35.0.0 platform-tools'
+
+      - name: Set up Gradle
+        uses: gradle/actions/setup-gradle@v4
+
+      - name: Install dependencies
+        run: npm install --legacy-peer-deps --no-audit --no-fund
+
+      - name: Ensure uploaded google-services.json is present in android/app
+        run: |
+          if [ ! -f android/app/google-services.json ]; then
+            if [ -f public/assets/aistudio/google-services_48e0edfe.json ]; then
+              cp public/assets/aistudio/google-services_48e0edfe.json android/app/google-services.json
+              echo "Copied uploaded google-services.json from public/assets/aistudio/google-services_48e0edfe.json to android/app/google-services.json"
+            else
+              FOUND_GS=$(find public -maxdepth 4 -name "google-services*.json" -type f | head -n 1)
+              if [ -n "$FOUND_GS" ]; then
+                cp "$FOUND_GS" android/app/google-services.json
+                echo "Copied uploaded google-services.json from $FOUND_GS to android/app/google-services.json"
+              fi
+            fi
+          fi
+
+      - name: Verify google-services.json and Firebase OAuth alignment
+        run: |
+          if [ -f android/app/google-services.json ]; then
+            echo "google-services.json found successfully."
+            node -e "
+              const fs = require('fs');
+              const gs = JSON.parse(fs.readFileSync('android/app/google-services.json', 'utf8'));
+              const client = gs.client?.find((c) => c.client_info?.android_client_info?.package_name === 'com.flix4u.rorax') || gs.client?.[0];
+              const pkg = client?.client_info?.android_client_info?.package_name;
+              if (pkg !== 'com.flix4u.rorax') {
+                console.error('Invalid package_name:', pkg);
+                process.exit(1);
+              }
+              const apiKey = client?.api_key?.[0]?.current_key;
+              const appId = client?.client_info?.mobilesdk_app_id;
+              if (!gs.project_info?.project_id || !apiKey || !appId) {
+                console.error('Missing project_id, api_key, or mobilesdk_app_id in google-services.json');
+                process.exit(1);
+              }
+              const oauthClients = Array.isArray(client?.oauth_client) ? client.oauth_client : [];
+              const androidClients = oauthClients.filter((c) => c.client_type === 1);
+              const webClients = oauthClients.filter((c) => c.client_type === 3);
+              console.log('Android APK Firebase project_id:', gs.project_info?.project_id, 'mobilesdk_app_id:', appId, 'package_name:', pkg);
+              console.log('google-services oauth_client counts -> Android(type=1):', androidClients.length, 'Web(type=3):', webClients.length);
+              if (androidClients.length === 0) {
+                console.log('::warning::android/app/google-services.json has 0 Android OAuth clients (client_type=1). Add your APK SHA-1 and SHA-256 in Firebase Console for project ' + gs.project_info?.project_id + ' and re-download google-services.json for Google Sign-In.');
+              }
+              if (fs.existsSync('firebase-applet-config.json')) {
+                const webCfg = JSON.parse(fs.readFileSync('firebase-applet-config.json', 'utf8'));
+                console.log('Website Firebase projectId:', webCfg.projectId, '(used only for Web runtime; APK runtime uses google-services.json project_id:', gs.project_info?.project_id + ')');
+              }
+            "
+          else
+            echo "Error: google-services.json missing in android/app/"
+            exit 1
+          fi
+
+      - name: Run TypeScript check
+        run: npm run lint
+
+      - name: Build production web bundle
+        env:
+          VITE_BACKEND_API_URL: ${{ github.event.inputs.backend_api_url || vars.VITE_BACKEND_API_URL || 'https://your-flix4u-backend.vercel.app' }}
+        run: npm run build
+
+      - name: Sync Capacitor Android project
+        run: npx cap sync android
+
+      - name: Configure Android debug keystore
+        env:
+          ANDROID_DEBUG_KEYSTORE_BASE64: ${{ secrets.ANDROID_DEBUG_KEYSTORE_BASE64 }}
+          ANDROID_DEBUG_STORE_PASSWORD: ${{ secrets.ANDROID_DEBUG_STORE_PASSWORD }}
+          ANDROID_DEBUG_KEY_PASSWORD: ${{ secrets.ANDROID_DEBUG_KEY_PASSWORD }}
+          ANDROID_DEBUG_KEY_ALIAS: ${{ secrets.ANDROID_DEBUG_KEY_ALIAS }}
+        run: |
+          set -euo pipefail
+          KEYSTORE_PATH="android/app/debug.keystore"
+          KEY_ALIAS="${ANDROID_DEBUG_KEY_ALIAS:-androiddebugkey}"
+          export DEBUG_STORE_PASS="${ANDROID_DEBUG_STORE_PASSWORD:-android}"
+          export DEBUG_KEY_PASS="${ANDROID_DEBUG_KEY_PASSWORD:-$DEBUG_STORE_PASS}"
+
+          mkdir -p "$(dirname "$KEYSTORE_PATH")"
+
+          STRIPPED_B64=$(printf '%s' "${ANDROID_DEBUG_KEYSTORE_BASE64:-}" | tr -d '[:space:]')
+          if [ -n "$STRIPPED_B64" ]; then
+            printf '%s' "$STRIPPED_B64" | base64 -d > "$KEYSTORE_PATH"
+            if [ ! -f "$KEYSTORE_PATH" ] || [ ! -s "$KEYSTORE_PATH" ]; then
+              echo "Error: Decoded keystore file $KEYSTORE_PATH is missing or empty."
+              exit 1
+            fi
+            echo "Restored $KEYSTORE_PATH from ANDROID_DEBUG_KEYSTORE_BASE64 secret."
+          elif [ -f "$KEYSTORE_PATH" ] && [ -s "$KEYSTORE_PATH" ]; then
+            echo "Using existing repository $KEYSTORE_PATH."
+          else
+            echo "No ANDROID_DEBUG_KEYSTORE_BASE64 secret or repository keystore found; generating debug keystore at $KEYSTORE_PATH."
+            keytool -genkeypair \
+              -keystore "$KEYSTORE_PATH" \
+              -storetype PKCS12 \
+              -storepass:env DEBUG_STORE_PASS \
+              -alias "$KEY_ALIAS" \
+              -keypass:env DEBUG_KEY_PASS \
+              -keyalg RSA \
+              -keysize 2048 \
+              -validity 10000 \
+              -dname "CN=Android Debug,O=Android,C=US"
+          fi
+
+          if [ ! -f "$KEYSTORE_PATH" ] || [ ! -s "$KEYSTORE_PATH" ]; then
+            echo "Error: Keystore file does not exist or is empty: $KEYSTORE_PATH"
+            exit 1
+          fi
+
+          echo "Verifying $KEYSTORE_PATH with keytool -list..."
+          keytool -list -v -keystore "$KEYSTORE_PATH" -alias "$KEY_ALIAS" -storepass:env DEBUG_STORE_PASS
+
+      - name: Build Android Debug APK
+        working-directory: android
+        env:
+          ANDROID_DEBUG_KEYSTORE_PATH: ${{ github.workspace }}/android/app/debug.keystore
+          ANDROID_DEBUG_STORE_PASSWORD: ${{ secrets.ANDROID_DEBUG_STORE_PASSWORD }}
+          ANDROID_DEBUG_KEY_PASSWORD: ${{ secrets.ANDROID_DEBUG_KEY_PASSWORD }}
+          ANDROID_DEBUG_KEY_ALIAS: ${{ secrets.ANDROID_DEBUG_KEY_ALIAS }}
+        run: |
+          set -euo pipefail
+          chmod +x gradlew
+          if [ ! -f app/debug.keystore ] || [ ! -s app/debug.keystore ]; then
+            echo "Error: android/app/debug.keystore is missing or empty before Gradle build."
+            exit 1
+          fi
+          ./gradlew assembleDebug --no-daemon
+
+      - name: Print APK Signing SHA-1 / SHA-256 Fingerprints
+        if: success()
+        run: |
+          set -euo pipefail
+          APK_DIR="android/app/build/outputs/apk/debug"
+          APK_FILE="app-debug.apk"
+          APK_PATH="$APK_DIR/$APK_FILE"
+
+          if [ ! -f "$APK_PATH" ] || [ ! -s "$APK_PATH" ]; then
+            echo "Error: Generated APK not found at $APK_PATH"
+            exit 1
+          fi
+
+          SDK_ROOT="${ANDROID_HOME:-${ANDROID_SDK_ROOT:-}}"
+          if [ -z "$SDK_ROOT" ] || [ ! -d "$SDK_ROOT/build-tools" ]; then
+            echo "Error: \$ANDROID_HOME/build-tools directory not found."
+            exit 1
+          fi
+
+          APKSIGNER_BIN=$(find "$SDK_ROOT/build-tools" -maxdepth 2 \( -type f -o -type l \) -name "apksigner" | sort -V | tail -n 1)
+          if [ -z "$APKSIGNER_BIN" ] || [ ! -x "$APKSIGNER_BIN" ]; then
+            echo "Error: apksigner binary not found under $SDK_ROOT/build-tools"
+            exit 1
+          fi
+
+          echo "Using apksigner: $APKSIGNER_BIN"
+          ls -lh "$APK_PATH"
+
+          CERT_OUTPUT=$(cd "$APK_DIR" && "$APKSIGNER_BIN" verify --print-certs "$APK_FILE")
+          echo "$CERT_OUTPUT"
+
+          SHA1_HEX=$(printf '%s\n' "$CERT_OUTPUT" | sed -n 's/.*SHA-1 digest:[[:space:]]*\([0-9a-fA-F]*\).*/\1/p' | head -n 1)
+          SHA256_HEX=$(printf '%s\n' "$CERT_OUTPUT" | sed -n 's/.*SHA-256 digest:[[:space:]]*\([0-9a-fA-F]*\).*/\1/p' | head -n 1)
+
+          if [ -z "$SHA1_HEX" ] || [ -z "$SHA256_HEX" ]; then
+            echo "Error: Failed to extract both SHA-1 and SHA-256 fingerprints from apksigner output."
+            exit 1
+          fi
+
+          SHA1_COLON=$(printf '%s' "$SHA1_HEX" | tr '[:lower:]' '[:upper:]' | sed 's/../&:/g; s/:$//')
+          SHA256_COLON=$(printf '%s' "$SHA256_HEX" | tr '[:lower:]' '[:upper:]' | sed 's/../&:/g; s/:$//')
+
+          echo "=============================================="
+          echo "APK Signing Certificate Fingerprints ($APK_FILE)"
+          echo "SHA-1   : $SHA1_COLON"
+          echo "SHA-256 : $SHA256_COLON"
+          echo "=============================================="
+
+      - name: Upload Flix4U Debug APK Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: flix4u-debug-apk
+          path: android/app/build/outputs/apk/debug/app-debug.apk
+          if-no-files-found: error
+          retention-days: 30
+

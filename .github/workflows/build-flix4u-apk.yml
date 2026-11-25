@@ -1,0 +1,40 @@
+name: Build Flix4U APK
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Java 21
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '21'
+
+      - name: Set up Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+          flutter-version: '3.50.1'
+          cache: true
+
+      - name: Build APK
+        working-directory: flix4u-app
+        env:
+          FLIX4U_BACKEND_URL: ${{ vars.FLIX4U_BACKEND_URL || secrets.FLIX4U_BACKEND_URL || 'https://your-flix4u-backend.vercel.app' }}
+        run: |
+          chmod +x bootstrap_android.sh configure_android.sh
+          ./bootstrap_android.sh
+
+      - name: Upload APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: flix4u-release-apk
+          path: flix4u-app/build/app/outputs/flutter-apk/app-release.apk

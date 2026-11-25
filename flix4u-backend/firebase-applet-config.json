@@ -1,0 +1,12 @@
+{
+  "projectId": "remixed-project-id",
+  "appId": "remixed-app-id",
+  "apiKey": "",
+  "authDomain": "",
+  "firestoreDatabaseId": "(default)",
+  "storageBucket": "",
+  "messagingSenderId": "",
+  "measurementId": "",
+  "oAuthClientId": "",
+  "recaptchaSiteKey": ""
+}

@@ -1,0 +1,6 @@
+{
+  "name": "Flix4U",
+  "description": "A nocturnal anime streaming platform powered by AniList metadata, HLS.js adaptive playback, and cloud-synced watchlists.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}

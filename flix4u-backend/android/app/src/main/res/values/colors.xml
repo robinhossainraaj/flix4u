@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <color name="colorPrimary">#8B5CF6</color>
+    <color name="colorPrimaryDark">#08090D</color>
+    <color name="colorAccent">#C026D3</color>
+    <color name="kuroBackground">#000000</color>
+</resources>

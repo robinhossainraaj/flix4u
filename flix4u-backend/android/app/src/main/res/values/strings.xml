@@ -1,0 +1,7 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <string name="app_name">Flix4U</string>
+    <string name="title_activity_main">Flix4U</string>
+    <string name="package_name">com.flix4u.rorax</string>
+    <string name="custom_url_scheme">com.flix4u.rorax</string>
+</resources>
