@@ -51,6 +51,43 @@ const PUBLIC_GUEST_MODE = true;
 - Redesigned library, downloads, and settings pages.
 - Diversified public catalog rails from Archive.org and AniList.
 
+### Step 2 — Palette, back navigation and direct playback
+
+- Applied the user-supplied palette from
+  `/sdcard/GenAi/reference/colour palette for app.jpeg`:
+  - app background `#0E1C27`
+  - surfaces `#11212D` and `#253745`
+  - CTA / text `#CCD0CF`
+  - muted text `#9AA8AB`
+  - deepest shade `#061418`
+- Home header redesigned:
+  - logo on the left
+  - search box and profile icon on the right
+- Category strip redesigned as an underline tab slider.
+- Banner carousel redesigned:
+  - large backdrop
+  - title
+  - release year
+  - genres/types
+  - rating badge
+  - `Watch now` CTA
+- Content taps now resolve a stream and open the player directly:
+  - banner
+  - rail cards
+  - search results
+  - category grid cards
+  - library cards
+- Continue Watching is saved locally when playback starts.
+- Android back behaviour:
+  - Home requires a second back press to exit.
+  - Search / Downloads / Me return to Home.
+  - Pushed screens show a back button and pop one screen.
+  - Downloads opened from Me returns to Me.
+- Added explicit back buttons to category, detail, player, library and settings.
+- Removed the bottom navigation from pushed Library and Settings screens.
+- Player progress colours updated to the new palette.
+- Updated design spec in `MOVIEBOX_UI_SPEC.md`.
+
 ### Backend (`flix4u-backend/`)
 
 - Guest-only fork of the KuroStream backend.
@@ -161,13 +198,13 @@ FLIX4U_BACKEND_URL=https://your-project.vercel.app ./bootstrap_android.sh
 SHA-256:
 
 ```txt
-fbfcd76ee16758bb452d44f637c6c50b746880ce491e9440e42fcaa4f116be1d
+6e98e149cd133aaebf861469a02927cc71fc6771856be601aab2c70f9459d23f
 ```
 
 Build run:
 
 ```txt
-https://github.com/robinhossainraaj/flix4u/actions/runs/45623655739
+https://github.com/robinhossainraaj/flix4u/actions/runs/45629080000
 ```
 
 ## Legal note
