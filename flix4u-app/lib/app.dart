@@ -10,6 +10,7 @@ import 'features/me/me_page.dart';
 import 'features/player/player_page.dart';
 import 'features/search/search_page.dart';
 import 'features/settings/settings_page.dart';
+import 'features/shorttv/shorttv_page.dart';
 import 'features/splash/splash_page.dart';
 import 'theme/app_theme.dart';
 
@@ -18,23 +19,31 @@ final GoRouter _router = GoRouter(
   routes: <RouteBase>[
     GoRoute(
       path: '/splash',
-      builder: (BuildContext context, GoRouterState state) =>
-          const SplashPage(),
+      builder: (BuildContext context, GoRouterState state) => const SplashPage(),
     ),
     GoRoute(
       path: '/',
       builder: (BuildContext context, GoRouterState state) => const HomePage(),
     ),
     GoRoute(
-      path: '/category/:key',
+      path: '/shorttv',
       builder: (BuildContext context, GoRouterState state) =>
-          CategoryPage(categoryKey: state.pathParameters['key'] ?? 'movies'),
+          const ShortTvPage(),
+    ),
+    GoRoute(
+      path: '/category/:key',
+      builder: (BuildContext context, GoRouterState state) => CategoryPage(
+        categoryKey: state.pathParameters['key'] ?? 'movies',
+        channel: state.uri.queryParameters['channel'],
+      ),
     ),
     GoRoute(
       path: '/detail/:type/:id',
       builder: (BuildContext context, GoRouterState state) => DetailPage(
         type: state.pathParameters['type'] ?? 'movie',
         id: state.pathParameters['id'] ?? '',
+        sourceJson: state.uri.queryParameters['source'],
+        referer: state.uri.queryParameters['referer'],
       ),
     ),
     GoRoute(
@@ -45,6 +54,10 @@ final GoRouter _router = GoRouter(
           url: params['url'] ?? '',
           title: params['title'] ?? 'Now Playing',
           referer: params['referer'],
+          local: params['local'] == '1',
+          type: params['type'],
+          id: params['id'],
+          sourceJson: params['source'],
         );
       },
     ),

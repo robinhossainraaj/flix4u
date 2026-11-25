@@ -13,7 +13,7 @@ class DirectDataSource {
             BaseOptions(
               connectTimeout: const Duration(seconds: 10),
               receiveTimeout: const Duration(seconds: 20),
-              headers: const {'Accept': 'application/json'},
+              headers: const <String, dynamic>{'Accept': 'application/json'},
             ),
           );
 
@@ -33,39 +33,79 @@ query ($page: Int, $perPage: Int, $search: String, $id: Int, $sort: [MediaSort])
       genres
       seasonYear
       averageScore
+      countryOfOrigin
     }
   }
 }
 ''';
+
+  static const List<String> _languages = <String>[
+    'Hindi',
+    'English',
+    'Tamil',
+    'Telugu',
+    'Bengali',
+    'Arabic',
+    'French',
+    'Spanish',
+    'Japanese',
+    'Korean',
+    'Chinese',
+    'Portuguese',
+    'Russian',
+    'Italian',
+  ];
+
+  static String _languageFrom(String text) {
+    final lower = text.toLowerCase();
+    for (final language in _languages) {
+      if (lower.contains(language.toLowerCase())) return language;
+    }
+    return 'Original';
+  }
+
+  static String _text(dynamic value, [String fallback = '']) {
+    if (value == null) return fallback;
+    if (value is List) return value.join(', ');
+    return value.toString();
+  }
+
+  static String _countryFrom(Map<String, dynamic> doc) {
+    final value = doc['country'] ?? doc['countryOfOrigin'] ?? doc['country_iso'];
+    return _text(value);
+  }
 
   List<Map<String, dynamic>> _archiveDocs(List<dynamic> docs, String type) {
     return docs
         .whereType<Map>()
         .map((raw) {
           final doc = raw.cast<String, dynamic>();
-          final identifier = (doc['identifier'] ?? '').toString();
+          final identifier = _text(doc['identifier']);
           final subject = doc['subject'];
           final genres = subject is List
               ? subject.take(6).map((g) => g.toString()).toList()
               : <String>[];
-          final yearRaw = doc['year']?.toString() ?? '';
-          final year = int.tryParse(yearRaw);
+          final title = _text(doc['title'], identifier);
+          final year = int.tryParse(_text(doc['year']));
+          final description = _text(doc['description']);
           return <String, dynamic>{
             'id': 'archive:$type:$identifier',
             'identifier': identifier,
-            'type': type,
-            'title': (doc['title'] ?? identifier).toString(),
+            'type': type == 'tv' ? 'tv' : 'movie',
+            'title': title,
             'poster': identifier.isEmpty
                 ? ''
                 : '$_archive/services/img/${Uri.encodeComponent(identifier)}',
             'backdrop': identifier.isEmpty
                 ? ''
                 : '$_archive/services/img/${Uri.encodeComponent(identifier)}',
-            'description': (doc['description'] ?? '').toString(),
+            'description': description,
             'provider': 'archive',
             'genres': genres,
             'year': year,
             'rating': null,
+            'country': _countryFrom(doc),
+            'language': _languageFrom('$title $description'),
           };
         })
         .where((item) => (item['identifier'] as String).isNotEmpty)
@@ -81,9 +121,14 @@ query ($page: Int, $perPage: Int, $search: String, $id: Int, $sort: [MediaSort])
   }) async {
     final mediatype = type == 'tv' ? 'tv' : 'movies';
     final safeQuery = query.trim().replaceAll(RegExp(r'["\\]'), ' ');
-    final q = safeQuery.isEmpty
+    final queryText = switch (type) {
+      'short' => 'short OR clip OR "short film"',
+      'music' => 'music OR musical OR concert',
+      _ => safeQuery,
+    };
+    final q = queryText.isEmpty
         ? '$mediatype AND format:"MPEG4"'
-        : '$mediatype AND ($safeQuery) AND format:"MPEG4"';
+        : '$mediatype AND ($queryText) AND format:"MPEG4"';
     final response = await _dio.get<Map<String, dynamic>>(
       '$_archive/advancedsearch.php',
       queryParameters: <String, dynamic>{
@@ -94,6 +139,8 @@ query ($page: Int, $perPage: Int, $search: String, $id: Int, $sort: [MediaSort])
           'description',
           'subject',
           'year',
+          'country',
+          'language',
         ],
         'rows': rows,
         'page': page,
@@ -103,7 +150,7 @@ query ($page: Int, $perPage: Int, $search: String, $id: Int, $sort: [MediaSort])
     );
     final docs =
         (response.data?['response']?['docs'] as List?) ?? const <dynamic>[];
-    return _archiveDocs(docs, type);
+    return _archiveDocs(docs, type == 'tv' ? 'tv' : 'movie');
   }
 
   List<Map<String, dynamic>> _anilistMedia(List<dynamic> media) {
@@ -111,22 +158,20 @@ query ($page: Int, $perPage: Int, $search: String, $id: Int, $sort: [MediaSort])
       final item = raw.cast<String, dynamic>();
       final title = (item['title'] ?? const <String, dynamic>{}) as Map;
       final cover = (item['coverImage'] ?? const <String, dynamic>{}) as Map;
-      final description = (item['description'] ?? '').toString().replaceAll(
-        RegExp(r'<[^>]*>'),
-        '',
-      );
+      final description = _text(
+        item['description'],
+      ).replaceAll(RegExp(r'<[^>]*>'), '');
       final score = item['averageScore'];
+      final name = _text(
+        title['romaji'] ?? title['english'] ?? title['native'],
+        'Untitled',
+      );
       return <String, dynamic>{
         'id': 'anilist:${item['id'] ?? ''}',
         'type': 'anime',
-        'title':
-            (title['romaji'] ??
-                    title['english'] ??
-                    title['native'] ??
-                    'Untitled')
-                .toString(),
-        'poster': (cover['extraLarge'] ?? cover['large'] ?? '').toString(),
-        'backdrop': (item['bannerImage'] ?? '').toString(),
+        'title': name,
+        'poster': _text(cover['extraLarge'] ?? cover['large']),
+        'backdrop': _text(item['bannerImage']),
         'description': description,
         'provider': 'anilist',
         'genres': item['genres'] is List
@@ -134,6 +179,8 @@ query ($page: Int, $perPage: Int, $search: String, $id: Int, $sort: [MediaSort])
             : <String>[],
         'year': item['seasonYear'],
         'rating': score is num ? score / 10 : null,
+        'country': _text(item['countryOfOrigin']),
+        'language': _languageFrom('$name $description'),
       };
     }).toList();
   }
@@ -184,6 +231,8 @@ query ($page: Int, $perPage: Int, $search: String, $id: Int, $sort: [MediaSort])
       safe(() => archiveSearch('series OR documentary', 'tv', rows: 16)),
       safe(() => anilist(perPage: 16, sort: const <String>['TRENDING_DESC'])),
       safe(() => anilist(perPage: 16, sort: const <String>['POPULARITY_DESC'])),
+      safe(() => archiveSearch('', 'short', rows: 16)),
+      safe(() => archiveSearch('', 'music', rows: 16)),
     ]);
     return <String, dynamic>{
       'trending': jobs[0],
@@ -196,12 +245,16 @@ query ($page: Int, $perPage: Int, $search: String, $id: Int, $sort: [MediaSort])
       'documentarySeries': jobs[4],
       'anime': jobs[5],
       'popularAnime': jobs[6],
+      'shorts': jobs[7],
+      'music': jobs[8],
     };
   }
 
   Future<List<Map<String, dynamic>>> search(String query, String type) async {
     if (type == 'anime') return anilist(search: query, perPage: 20);
     if (type == 'tv') return archiveSearch(query, 'tv', rows: 20);
+    if (type == 'short') return archiveSearch(query, 'short', rows: 20);
+    if (type == 'music') return archiveSearch(query, 'music', rows: 20);
     if (type == 'movie') return archiveSearch(query, 'movie', rows: 20);
     final jobs = await Future.wait([
       archiveSearch(
@@ -238,12 +291,26 @@ query ($page: Int, $perPage: Int, $search: String, $id: Int, $sort: [MediaSort])
     }
     if (parts.first == 'anilist') {
       final id = int.tryParse(parts.last);
-      if (id == null) throw FormatException('Invalid AniList id');
+      if (id == null) throw const FormatException('Invalid AniList id');
       final items = await anilist(id: id, perPage: 1);
       if (items.isEmpty) throw StateError('Anime not found');
       return items.first;
     }
     throw UnsupportedError('Unsupported media id: $rawId');
+  }
+
+  static String _qualityFor(String name, dynamic size) {
+    final lower = name.toLowerCase();
+    if (lower.contains('2160') || lower.contains('4k')) {
+      return '2160p 4K · MP4';
+    }
+    if (lower.contains('1080')) return '1080p HD · MP4';
+    if (lower.contains('720')) return '720p HD · MP4';
+    if (lower.contains('480')) return '480p SD · MP4';
+    final bytes = size is num ? size.toInt() : 0;
+    if (bytes > 1200000000) return 'HD · MP4';
+    if (bytes > 300000000) return 'SD · MP4';
+    return 'Auto · MP4';
   }
 
   Future<Map<String, dynamic>> resolveStream(String rawId, String title) async {
@@ -253,7 +320,7 @@ query ($page: Int, $perPage: Int, $search: String, $id: Int, $sort: [MediaSort])
     } else if (title.isNotEmpty) {
       final results = await archiveSearch(title, 'movie', rows: 12);
       for (final item in results) {
-        final candidate = (item['identifier'] ?? '').toString();
+        final candidate = _text(item['identifier']);
         if (candidate.isNotEmpty) {
           identifier = candidate;
           break;
@@ -275,25 +342,36 @@ query ($page: Int, $perPage: Int, $search: String, $id: Int, $sort: [MediaSort])
           (f) => RegExp(
             r'\.(mp4|m4v|webm)$',
             caseSensitive: false,
-          ).hasMatch((f['name'] ?? '').toString()),
+          ).hasMatch(_text(f['name'])),
         )
         .toList();
     if (playable.isEmpty) {
       throw StateError('No playable video file was found for this item.');
     }
-    final chosen = playable.first;
-    final name = (chosen['name'] ?? '').toString();
+    playable.sort((a, b) {
+      final left = a['size'] is num ? (a['size'] as num).toInt() : 0;
+      final right = b['size'] is num ? (b['size'] as num).toInt() : 0;
+      return right.compareTo(left);
+    });
+
+    final sources = playable.take(8).map((file) {
+      final name = _text(file['name']);
+      return <String, dynamic>{
+        'url':
+            '$_archive/download/${Uri.encodeComponent(identifier)}/${Uri.encodeComponent(name)}',
+        'quality': _qualityFor(name, file['size']),
+        'type': name.split('.').last.toLowerCase(),
+        'language': _languageFrom('$name $title'),
+      };
+    }).toList();
+
     return <String, dynamic>{
-      'sources': <dynamic>[
-        <String, dynamic>{
-          'url':
-              '$_archive/download/${Uri.encodeComponent(identifier)}/${Uri.encodeComponent(name)}',
-          'quality': 'Auto · MP4',
-          'type': 'mp4',
-        },
-      ],
+      'sources': sources,
       'subtitles': <dynamic>[],
-      'headers': <String, dynamic>{'Referer': '$_archive/'},
+      'headers': <String, dynamic>{
+        'Referer': '$_archive/',
+        'User-Agent': 'Mozilla/5.0 (Linux; Android; Flix4U)',
+      },
       'provider': 'archive',
       'title': title,
     };

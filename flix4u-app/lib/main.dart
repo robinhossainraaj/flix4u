@@ -8,5 +8,6 @@ Future<void> main() async {
   await Hive.initFlutter();
   await Hive.openBox('library');
   await Hive.openBox('settings');
+  await Hive.openBox('downloads');
   runApp(const Flix4UApp());
 }

@@ -19,6 +19,9 @@ dependencies:
   chewie: ^1.8.5
   intl: ^0.20.2
   package_info_plus: ^10.2.2
+  share_plus: ^13.3.1
+  speech_to_text: ^7.5.0
+  path_provider: ^2.1.6
 
 dev_dependencies:
   flutter_test:

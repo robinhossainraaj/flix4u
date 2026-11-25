@@ -79,7 +79,10 @@ Future<void> playMedia(
     context.push(
       '/player?url=${Uri.encodeComponent(stream.url)}'
       '&title=${Uri.encodeComponent(item.title)}'
-      '&referer=${Uri.encodeComponent(stream.referer)}',
+      '&referer=${Uri.encodeComponent(stream.referer)}'
+      '&id=${Uri.encodeComponent(item.id)}'
+      '&type=${Uri.encodeComponent(item.type)}'
+      '&source=${Uri.encodeComponent(jsonEncode(stream.toJson()))}',
     );
   } catch (error) {
     if (!context.mounted) return;

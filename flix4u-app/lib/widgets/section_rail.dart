@@ -25,12 +25,12 @@ class SectionRail extends StatelessWidget {
     if (items.isEmpty) return const SizedBox.shrink();
 
     return Padding(
-      padding: const EdgeInsets.only(top: 18),
+      padding: const EdgeInsets.only(top: 16),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: <Widget>[
           Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 16),
+            padding: const EdgeInsets.symmetric(horizontal: 13),
             child: Row(
               children: <Widget>[
                 Expanded(
@@ -41,9 +41,8 @@ class SectionRail extends StatelessWidget {
                         title,
                         style: const TextStyle(
                           color: AppColors.text,
-                          fontSize: 18,
+                          fontSize: 17,
                           fontWeight: FontWeight.w800,
-                          letterSpacing: -0.2,
                         ),
                       ),
                       if (subtitle != null)
@@ -53,48 +52,50 @@ class SectionRail extends StatelessWidget {
                           overflow: TextOverflow.ellipsis,
                           style: const TextStyle(
                             color: AppColors.muted,
-                            fontSize: 10.5,
-                            fontWeight: FontWeight.w500,
+                            fontSize: 11,
                           ),
                         ),
                     ],
                   ),
                 ),
                 if (onSeeAll != null)
-                  TextButton(
-                    onPressed: onSeeAll,
-                    style: TextButton.styleFrom(
-                      foregroundColor: AppColors.primaryDeep,
-                      padding: const EdgeInsets.symmetric(horizontal: 8),
-                      minimumSize: const Size(0, 34),
-                      tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                    ),
-                    child: const Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: <Widget>[
-                        Text(
-                          'All',
-                          style: TextStyle(
-                            fontSize: 12,
-                            fontWeight: FontWeight.w700,
+                  InkWell(
+                    onTap: onSeeAll,
+                    borderRadius: BorderRadius.circular(8),
+                    child: const Padding(
+                      padding: EdgeInsets.symmetric(horizontal: 6, vertical: 4),
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: <Widget>[
+                          Text(
+                            'All',
+                            style: TextStyle(
+                              color: AppColors.accentSoft,
+                              fontSize: 13.5,
+                              fontWeight: FontWeight.w800,
+                            ),
                           ),
-                        ),
-                        Icon(Icons.chevron_right_rounded, size: 17),
-                      ],
+                          Icon(
+                            Icons.chevron_right_rounded,
+                            size: 17,
+                            color: AppColors.accentSoft,
+                          ),
+                        ],
+                      ),
                     ),
                   ),
               ],
             ),
           ),
-          const SizedBox(height: 10),
+          const SizedBox(height: 9),
           SizedBox(
-            height: 172,
+            height: 198,
             child: ListView.separated(
-              padding: const EdgeInsets.symmetric(horizontal: 16),
+              padding: const EdgeInsets.symmetric(horizontal: 13),
               scrollDirection: Axis.horizontal,
               physics: const BouncingScrollPhysics(),
               itemCount: items.length,
-              separatorBuilder: (_, __) => const SizedBox(width: 12),
+              separatorBuilder: (_, __) => const SizedBox(width: 9),
               itemBuilder: (context, index) {
                 final item = items[index];
                 return MediaCard(

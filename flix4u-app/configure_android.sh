@@ -76,13 +76,13 @@ label = sys.argv[1]
 path = Path("android/app/src/main/AndroidManifest.xml")
 text = path.read_text()
 text = re.sub(r'android:label="[^"]*"', f'android:label="{label}"', text, count=1)
+permissions = ""
 if 'android.permission.INTERNET' not in text:
-    text = re.sub(
-        r'(<manifest\b[^>]*>)',
-        r'\1\n    <uses-permission android:name="android.permission.INTERNET" />',
-        text,
-        count=1,
-    )
+    permissions += '\n    <uses-permission android:name="android.permission.INTERNET" />'
+if 'android.permission.RECORD_AUDIO' not in text:
+    permissions += '\n    <uses-permission android:name="android.permission.RECORD_AUDIO" />'
+if permissions:
+    text = re.sub(r'(<manifest\b[^>]*>)', r'\1' + permissions, text, count=1)
 path.write_text(text)
 print(f"Configured {path}")
 PY
@@ -99,7 +99,7 @@ mkdir -p android/app/src/main/res/values
 cat > android/app/src/main/res/values/ic_launcher_background.xml <<'XML'
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <color name="ic_launcher_background">#7C4DFF</color>
+    <color name="ic_launcher_background">#0A3C55</color>
 </resources>
 XML
 

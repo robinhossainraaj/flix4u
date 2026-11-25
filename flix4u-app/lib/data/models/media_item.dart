@@ -34,6 +34,8 @@ class MediaItem {
     required this.genres,
     this.year,
     this.rating,
+    this.country,
+    this.language,
   });
 
   final String id;
@@ -46,6 +48,8 @@ class MediaItem {
   final List<String> genres;
   final int? year;
   final double? rating;
+  final String? country;
+  final String? language;
 
   factory MediaItem.fromJson(Map<String, dynamic> json) {
     return MediaItem(
@@ -59,10 +63,12 @@ class MediaItem {
       genres: _stringList(json['genres']),
       year: _integer(json['year']),
       rating: _double(json['rating']),
+      country: json['country'] == null ? null : _text(json['country']),
+      language: json['language'] == null ? null : _text(json['language']),
     );
   }
 
-  Map<String, dynamic> toJson() => {
+  Map<String, dynamic> toJson() => <String, dynamic>{
     'id': id,
     'type': type,
     'title': title,
@@ -73,5 +79,17 @@ class MediaItem {
     'genres': genres,
     'year': year,
     'rating': rating,
+    'country': country,
+    'language': language,
   };
+
+  String get languageLabel {
+    final match = RegExp(
+      r'\[([^\]]+)\]',
+    ).firstMatch(title)?.group(1)?.trim();
+    if (match != null && match.isNotEmpty) return match;
+    if (language != null && language!.isNotEmpty) return language!;
+    if (provider.toLowerCase().contains('hindi')) return 'Hindi';
+    return 'Original';
+  }
 }
