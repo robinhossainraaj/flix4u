@@ -30,12 +30,12 @@ class _SearchPageState extends State<SearchPage> {
       ];
 
   static const List<String> _popular = <String>[
-    'The Terminal List',
-    'The Witcher',
-    'The Mentalist [ترجمة عربية]',
-    'The Punisher',
-    'Dr. Stone',
-    'Black Torch',
+    'Charlie Chaplin',
+    'His Girl Friday',
+    'The Lone Ranger',
+    'Get Smart',
+    'Jungle Book',
+    'One Piece',
   ];
 
   final CatalogRepository _repository = CatalogRepository();

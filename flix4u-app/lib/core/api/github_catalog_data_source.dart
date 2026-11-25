@@ -18,7 +18,7 @@ class GithubCatalogDataSource {
           );
 
   final Dio _dio;
-  Map<String, dynamic>? _cache;
+  static Map<String, dynamic>? _cache;
 
   Future<Map<String, dynamic>?> load() async {
     final cached = _cache;
@@ -122,7 +122,9 @@ class GithubCatalogDataSource {
       case 'music':
         return id.contains(':music:');
       case 'movie':
-        return rawType == 'movie' && !id.contains(':short:');
+        return rawType == 'movie' &&
+            !id.contains(':short:') &&
+            !id.contains(':music:');
       default:
         return true;
     }
