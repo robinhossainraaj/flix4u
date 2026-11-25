@@ -118,17 +118,20 @@ query ($page: Int, $perPage: Int, $search: String, $id: Int, $sort: [MediaSort])
     int page = 1,
     int rows = 12,
     String sort = 'downloads desc',
+    String collection = '',
   }) async {
-    final mediatype = type == 'tv' ? 'tv' : 'movies';
-    final safeQuery = query.trim().replaceAll(RegExp(r'["\\]'), ' ');
-    final queryText = switch (type) {
-      'short' => 'short OR clip OR "short film"',
-      'music' => 'music OR musical OR concert',
-      _ => safeQuery,
+    // Archive.org's `mediatype:tv` bucket is almost empty. Real series live in
+    // the movies bucket, so filter by text instead of an invalid media type.
+    final base = switch (type) {
+      'short' => 'mediatype:movies AND (short OR clip)',
+      'music' => 'mediatype:movies AND (music OR musical OR concert)',
+      'tv' => 'mediatype:movies AND (series OR episode OR tv)',
+      _ => 'mediatype:movies',
     };
-    final q = queryText.isEmpty
-        ? '$mediatype AND format:"MPEG4"'
-        : '$mediatype AND ($queryText) AND format:"MPEG4"';
+    final safeQuery = query.trim().replaceAll(RegExp(r'["\\]'), ' ');
+    final queryClause = safeQuery.isEmpty ? '' : ' AND ($safeQuery)';
+    final collectionClause = collection.isEmpty ? '' : 'collection:$collection AND ';
+    final q = '$collectionClause$base$queryClause AND format:"MPEG4"';
     final response = await _dio.get<Map<String, dynamic>>(
       '$_archive/advancedsearch.php',
       queryParameters: <String, dynamic>{
@@ -220,15 +223,32 @@ query ($page: Int, $perPage: Int, $search: String, $id: Int, $sort: [MediaSort])
     }
 
     final jobs = await Future.wait([
-      safe(() => archiveSearch('', 'movie', rows: 16)),
       safe(
-        () => archiveSearch('classic OR vintage OR silent', 'movie', rows: 16),
+        () => archiveSearch(
+          '',
+          'movie',
+          rows: 16,
+          collection: 'feature_films',
+        ),
       ),
       safe(
-        () => archiveSearch('adventure OR action OR comedy', 'movie', rows: 16),
+        () => archiveSearch(
+          '',
+          'movie',
+          rows: 16,
+          collection: 'silent_films',
+        ),
+      ),
+      safe(
+        () => archiveSearch(
+          'adventure OR action OR comedy',
+          'movie',
+          rows: 16,
+          collection: 'feature_films',
+        ),
       ),
       safe(() => archiveSearch('', 'tv', rows: 16)),
-      safe(() => archiveSearch('series OR documentary', 'tv', rows: 16)),
+      safe(() => archiveSearch('documentary', 'movie', rows: 16)),
       safe(() => anilist(perPage: 16, sort: const <String>['TRENDING_DESC'])),
       safe(() => anilist(perPage: 16, sort: const <String>['POPULARITY_DESC'])),
       safe(() => archiveSearch('', 'short', rows: 16)),

@@ -6,9 +6,11 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:hive_flutter/hive_flutter.dart';
 import 'package:share_plus/share_plus.dart';
+import 'package:url_launcher/url_launcher.dart';
 import 'package:video_player/video_player.dart';
 
 import '../../core/downloads/download_service.dart';
+import '../../core/playback/external_sources.dart';
 import '../../core/local/local_lists.dart';
 import '../../core/playback/play_media.dart';
 import '../../data/models/media_item.dart';
@@ -94,6 +96,12 @@ class _PlayerPageState extends State<PlayerPage> {
     final index = _selected < options.length ? _selected : 0;
     return options[index];
   }
+
+  List<ExternalSource> get _externalSources => buildExternalSources(
+    type: _media.type,
+    id: _media.id,
+    imdbId: _media.imdbId,
+  );
 
   @override
   void initState() {
@@ -316,6 +324,93 @@ class _PlayerPageState extends State<PlayerPage> {
               ),
             ],
           ),
+        ),
+      ),
+    );
+  }
+
+  Future<void> _openExternal(ExternalSource source) async {
+    final uri = Uri.tryParse(source.url);
+    if (uri == null) return;
+    try {
+      final opened = await launchUrl(
+        uri,
+        mode: LaunchMode.externalApplication,
+      );
+      if (!opened && mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Could not open this source.')),
+        );
+      }
+    } catch (_) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Could not open this source.')),
+        );
+      }
+    }
+  }
+
+  void _showExternalSources() {
+    final sources = _externalSources;
+    if (sources.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('External sources need a TMDB, IMDb or AniList ID.'),
+        ),
+      );
+      return;
+    }
+    showModalBottomSheet<void>(
+      context: context,
+      backgroundColor: AppColors.surface,
+      showDragHandle: true,
+      builder: (sheetContext) => SafeArea(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: <Widget>[
+            const Padding(
+              padding: EdgeInsets.fromLTRB(16, 4, 16, 10),
+              child: Text(
+                'Open external source',
+                style: TextStyle(
+                  color: AppColors.text,
+                  fontSize: 17,
+                  fontWeight: FontWeight.w900,
+                ),
+              ),
+            ),
+            Flexible(
+              child: ListView.builder(
+                shrinkWrap: true,
+                itemCount: sources.length,
+                itemBuilder: (context, index) {
+                  final source = sources[index];
+                  return ListTile(
+                    leading: const Icon(
+                      Icons.open_in_new_rounded,
+                      color: AppColors.accent,
+                    ),
+                    title: Text(
+                      source.label,
+                      style: const TextStyle(
+                        color: AppColors.text,
+                        fontWeight: FontWeight.w700,
+                      ),
+                    ),
+                    subtitle: const Text(
+                      'Opens in your browser · no login in Flix4U',
+                      style: TextStyle(color: AppColors.muted, fontSize: 12),
+                    ),
+                    onTap: () {
+                      Navigator.pop(sheetContext);
+                      _openExternal(source);
+                    },
+                  );
+                },
+              ),
+            ),
+          ],
         ),
       ),
     );
@@ -605,6 +700,12 @@ class _PlayerPageState extends State<PlayerPage> {
               onTap: () => context.push(
                 '/detail/${_media.type}/${Uri.encodeComponent(_media.id)}',
               ),
+            ),
+            const SizedBox(width: 9),
+            _chip(
+              icon: Icons.open_in_new_rounded,
+              label: 'Sources',
+              onTap: _showExternalSources,
             ),
           ],
         ),

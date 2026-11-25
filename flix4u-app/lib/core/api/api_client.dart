@@ -22,6 +22,9 @@ class ApiClient {
     String path, {
     Map<String, dynamic>? query,
   }) async {
+    if (!isBackendConfigured) {
+      throw StateError('Flix4U backend is not configured.');
+    }
     final response = await _dio.get<Map<String, dynamic>>(
       path,
       queryParameters: query,
@@ -30,6 +33,9 @@ class ApiClient {
   }
 
   Future<Map<String, dynamic>> postJson(String path, {Object? data}) async {
+    if (!isBackendConfigured) {
+      throw StateError('Flix4U backend is not configured.');
+    }
     final response = await _dio.post<Map<String, dynamic>>(path, data: data);
     return response.data ?? <String, dynamic>{};
   }

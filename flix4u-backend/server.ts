@@ -882,6 +882,16 @@ const CINEPRO_TIMEOUT_MS = Math.min(
   45000,
   Math.max(3000, Number(process.env.CINEPRO_TIMEOUT_MS || 15000) || 15000)
 );
+const REELDB_API_KEY = (process.env.REELDB_API_KEY || '').trim();
+const REELDB_BASE_URL = (
+  process.env.REELDB_BASE_URL || 'https://api.reeldb.io'
+)
+  .trim()
+  .replace(/\/+$/, '');
+const REELDB_TIMEOUT_MS = Math.min(
+  20000,
+  Math.max(3000, Number(process.env.REELDB_TIMEOUT_MS || 8000) || 8000)
+);
 const TMDB_IMAGE_BASE = 'https://image.tmdb.org/t/p';
 const ARCHIVE_API_BASE = 'https://archive.org';
 const ANIYOMI_REPO_URL =
@@ -923,6 +933,7 @@ const aniZipCache = new Map<number, CacheEntry<Record<string, unknown>>>();
 const aniSkipCache = new Map<string, CacheEntry<Record<string, unknown>>>();
 const audioAvailabilityCache = new Map<string, CacheEntry<Record<string, unknown>>>();
 const cineproCache = new Map<string, CacheEntry<Record<string, unknown>>>();
+const reeldbCache = new Map<string, CacheEntry<Record<string, unknown>>>();
 const primaryUnavailableCache = new Map<
   string,
   CacheEntry<{ statusCode: number; message: string; detail?: string }>
@@ -1238,6 +1249,204 @@ async function resolveCineproSources(
   }
   cineproCache.set(cacheKey, { expiresAt: Date.now() + ttl, data: result });
   return result;
+}
+
+function reeldbConfigured(): boolean {
+  return REELDB_API_KEY.length > 0;
+}
+
+function reeldbSafeMessage(raw: unknown): string {
+  const value = String(raw || 'ReelDB request failed.');
+  return value.split(REELDB_API_KEY).join('[redacted]').slice(0, 180);
+}
+
+function reeldbText(value: unknown, fallback = ''): string {
+  if (value === null || value === undefined) return fallback;
+  if (Array.isArray(value)) return value.join(', ');
+  return String(value);
+}
+
+function reeldbInteger(value: unknown): number | undefined {
+  if (typeof value === 'number' && Number.isFinite(value)) return Math.trunc(value);
+  if (typeof value === 'string') {
+    const parsed = Number(value);
+    if (Number.isFinite(parsed)) return Math.trunc(parsed);
+  }
+  return undefined;
+}
+
+function reeldbDouble(value: unknown): number | undefined {
+  if (typeof value === 'number' && Number.isFinite(value)) return value;
+  if (typeof value === 'string') {
+    const parsed = Number(value);
+    if (Number.isFinite(parsed)) return parsed;
+  }
+  return undefined;
+}
+
+function reeldbMap(value: unknown): Record<string, unknown> {
+  return value && typeof value === 'object' && !Array.isArray(value)
+    ? (value as Record<string, unknown>)
+    : {};
+}
+
+function reeldbImage(value: unknown): string {
+  if (typeof value === 'string') return value;
+  const map = reeldbMap(value);
+  return reeldbText(map.url || map.poster || map.path || map.image);
+}
+
+function reeldbStrings(value: unknown): string[] {
+  if (Array.isArray(value)) {
+    return value
+      .map((entry) => {
+        if (typeof entry === 'string') return entry;
+        const map = reeldbMap(entry);
+        return reeldbText(map.name || map.title || map.provider_name);
+      })
+      .filter(Boolean);
+  }
+  const text = reeldbText(value);
+  return text ? [text] : [];
+}
+
+function reeldbType(value: unknown, fallback = 'movie'): 'movie' | 'tv' | 'anime' {
+  const raw = reeldbText(value, fallback).toLowerCase();
+  if (raw === 'tv' || raw === 'series' || raw === 'show') return 'tv';
+  if (raw === 'anime') return 'anime';
+  return 'movie';
+}
+
+function normalizeReeldbItem(
+  raw: unknown,
+  fallbackType: 'movie' | 'tv' | 'anime' = 'movie'
+): Record<string, unknown> | null {
+  const json = reeldbMap(raw);
+  if (!Object.keys(json).length) return null;
+  const ids = reeldbMap(json.ids);
+  const imdb = reeldbText(ids.imdb || json.imdb || json.imdb_id).trim();
+  const tmdb = reeldbInteger(ids.tmdb || json.tmdb || json.tmdb_id);
+  const type = reeldbType(json.type || ids.type, fallbackType);
+  const providerId = reeldbText(ids.mdblist || json.id || json.slug).trim();
+
+  let id = '';
+  if (tmdb && tmdb > 0) id = `tmdb:${type}:${tmdb}`;
+  else if (/^tt\d+$/.test(imdb)) id = `imdb:${imdb}`;
+  else if (providerId) id = `reeldb:${providerId}`;
+  else id = `reeldb:${Date.now()}`;
+  if (!id) return null;
+
+  const ratings = reeldbMap(json.ratings || json.rating);
+  const ratingCandidates = [
+    ratings.imdb,
+    ratings.tmdb,
+    ratings.trakt,
+    ratings.score,
+    ratings.rating,
+    json.rating,
+  ];
+  let rating: number | undefined;
+  for (const candidate of ratingCandidates) {
+    const nested = reeldbMap(candidate);
+    const value = reeldbDouble(nested.rating ?? nested.score ?? candidate);
+    if (value !== undefined) {
+      rating = value;
+      break;
+    }
+  }
+
+  const extras: Record<string, unknown> = {};
+  for (const key of [
+    'ratings',
+    'cast',
+    'providers',
+    'seasons',
+    'runtime',
+    'certification',
+    'externalLinks',
+    'links',
+  ]) {
+    if (json[key] !== undefined) extras[key] = json[key];
+  }
+  if (imdb) extras.imdbId = imdb;
+  if (tmdb) extras.tmdbId = tmdb;
+
+  const year = reeldbInteger(json.year || json.releaseYear);
+  const country = reeldbText(json.country);
+  const language = reeldbText(json.language || json.original_language);
+
+  return {
+    id,
+    type,
+    title: reeldbText(json.title || json.name || json.original_title, 'Untitled'),
+    poster: reeldbImage(json.poster || json.poster_path || json.image),
+    backdrop: reeldbImage(json.backdrop || json.backdrop_path || json.fanart),
+    description: reeldbText(json.description || json.overview || json.plot),
+    provider: 'reeldb',
+    genres: reeldbStrings(json.genres),
+    year,
+    rating,
+    country: country || undefined,
+    language: language || undefined,
+    imdbId: imdb || undefined,
+    extras,
+  };
+}
+
+async function reeldbFetch(
+  path: string,
+  params: Record<string, string | number | undefined>,
+  ttlMs: number
+): Promise<Record<string, unknown>> {
+  if (!reeldbConfigured()) throw new Error('ReelDB key is not configured.');
+
+  const query = new URLSearchParams();
+  for (const [key, value] of Object.entries(params)) {
+    if (value !== undefined && value !== null && String(value).trim()) {
+      query.set(key, String(value).trim());
+    }
+  }
+  query.set('apikey', REELDB_API_KEY);
+
+  const url = `${REELDB_BASE_URL}${path}?${query.toString()}`;
+  const cacheKey = `${path}?${new URLSearchParams(
+    Object.fromEntries(
+      Object.entries(params).map(([key, value]) => [key, String(value ?? '')])
+    )
+  ).toString()}`;
+  const cached = reeldbCache.get(cacheKey);
+  if (cached && cached.expiresAt > Date.now()) return cached.data;
+
+  const response = await fetchWithTimeout(
+    url,
+    {
+      headers: {
+        Accept: 'application/json',
+        'User-Agent': BROWSER_UA,
+      },
+    },
+    REELDB_TIMEOUT_MS
+  );
+  if (response.status === 429) {
+    throw new Error('ReelDB rate limit reached. Try again later.');
+  }
+  if (!response.ok) {
+    throw new Error(`ReelDB returned HTTP ${response.status}.`);
+  }
+  const json = reeldbMap(await response.json());
+  if (json.error) throw new Error(reeldbSafeMessage(json.error));
+  reeldbCache.set(cacheKey, { expiresAt: Date.now() + ttlMs, data: json });
+  return json;
+}
+
+function reeldbPathId(query: Request['query']): string {
+  const direct = reeldbText(query.id).trim();
+  if (direct) return encodeURIComponent(direct);
+  const imdb = reeldbText(query.imdb).trim();
+  if (/^tt\d+$/.test(imdb)) return encodeURIComponent(imdb);
+  const tmdb = reeldbText(query.tmdb).trim();
+  if (/^\d+$/.test(tmdb)) return encodeURIComponent(tmdb);
+  return '';
 }
 
 const ANILIST_CATALOG_QUERY = `query ($page: Int, $perPage: Int, $search: String, $id: Int, $sort: [MediaSort]) {
@@ -4126,12 +4335,126 @@ export function createExpressApp() {
         anilistUrl: ANILIST_API_URL,
         cineproBase: CINEPRO_BASE_URL,
         cineproConfigured: cineproConfigured(),
+        reeldbConfigured: reeldbConfigured(),
       },
       firebaseConfigured: FIREBASE_PROJECTS.length > 0,
       firebaseProjects: FIREBASE_PROJECTS.map((p) => p.projectId),
       guestMode: PUBLIC_GUEST_MODE,
       app: 'Flix4U',
     });
+  });
+
+  // ReelDB metadata proxy. The key stays in the backend environment; Flutter
+  // only sees normalized Flix4U JSON and never receives the credential.
+  app.get('/api/reeldb/search', async (req: Request, res: Response) => {
+    const q = reeldbText(req.query.q).trim();
+    if (q.length < 2) {
+      res.status(400).json({ error: 'Search query must be at least 2 characters.', items: [] });
+      return;
+    }
+    const requestedType = reeldbText(req.query.type).trim();
+    const apiType = requestedType === 'tv' || requestedType === 'series' ? 'series' : 'movie';
+    try {
+      const json = await reeldbFetch(
+        '/v1/search',
+        {
+          q,
+          type: apiType,
+          y: reeldbText(req.query.y).trim() || undefined,
+          page: reeldbInteger(req.query.page) || 1,
+        },
+        15 * 60 * 1000
+      );
+      const rawItems = json.results || json.items || json.titles || json.media;
+      const items = (Array.isArray(rawItems) ? rawItems : [])
+        .map((entry) => normalizeReeldbItem(entry, apiType === 'series' ? 'tv' : 'movie'))
+        .filter(Boolean);
+      res.json({ items, source: 'reeldb' });
+    } catch (error) {
+      res.status(503).json({
+        error: reeldbSafeMessage(error instanceof Error ? error.message : error),
+        items: [],
+      });
+    }
+  });
+
+  app.get('/api/reeldb/title', async (req: Request, res: Response) => {
+    const imdb = reeldbText(req.query.imdb).trim();
+    const tmdb = reeldbText(req.query.tmdb).trim();
+    const title = reeldbText(req.query.t).trim();
+    if (!imdb && !tmdb && !title) {
+      res.status(400).json({ error: 'Provide imdb, tmdb or t.' });
+      return;
+    }
+    const requestedType = reeldbText(req.query.type).trim();
+    const fallback = requestedType === 'tv' || requestedType === 'series' ? 'tv' : 'movie';
+    try {
+      const json = await reeldbFetch(
+        '/v1/title',
+        {
+          imdb: imdb || undefined,
+          tmdb: tmdb || undefined,
+          t: title || undefined,
+          type: requestedType || undefined,
+          y: reeldbText(req.query.y).trim() || undefined,
+          append: 'ratings,cast,providers,seasons',
+        },
+        6 * 60 * 60 * 1000
+      );
+      res.json(normalizeReeldbItem(json, fallback) || {});
+    } catch (error) {
+      res.status(503).json({
+        error: reeldbSafeMessage(error instanceof Error ? error.message : error),
+      });
+    }
+  });
+
+  app.get(
+    ['/api/reeldb/ratings', '/api/reeldb/cast', '/api/reeldb/providers', '/api/reeldb/seasons'],
+    async (req: Request, res: Response) => {
+      const id = reeldbPathId(req.query);
+      if (!id) {
+        res.status(400).json({ error: 'Provide id, imdb or tmdb.' });
+        return;
+      }
+      const segment = req.path.split('/').pop() || 'ratings';
+      try {
+        const json = await reeldbFetch(
+          `/v1/title/${id}/${segment}`,
+          {
+            id_type: reeldbText(req.query.id_type).trim() || undefined,
+            region: reeldbText(req.query.region).trim() || undefined,
+          },
+          24 * 60 * 60 * 1000
+        );
+        res.json(json);
+      } catch (error) {
+        res.status(503).json({
+          error: reeldbSafeMessage(error instanceof Error ? error.message : error),
+        });
+      }
+    }
+  );
+
+  app.get('/api/reeldb/seasons/:season', async (req: Request, res: Response) => {
+    const id = reeldbPathId(req.query);
+    if (!id) {
+      res.status(400).json({ error: 'Provide id, imdb or tmdb.' });
+      return;
+    }
+    const season = Math.max(1, Math.floor(Number(req.params.season) || 1));
+    try {
+      const json = await reeldbFetch(
+        `/v1/title/${id}/seasons/${season}`,
+        { id_type: reeldbText(req.query.id_type).trim() || undefined },
+        24 * 60 * 60 * 1000
+      );
+      res.json(json);
+    } catch (error) {
+      res.status(503).json({
+        error: reeldbSafeMessage(error instanceof Error ? error.message : error),
+      });
+    }
   });
 
   // Short-lived HttpOnly stream session cookie for native <video src> MP4 / Safari HLS playback

@@ -36,6 +36,8 @@ class MediaItem {
     this.rating,
     this.country,
     this.language,
+    this.imdbId,
+    this.extras = const <String, dynamic>{},
   });
 
   final String id;
@@ -50,6 +52,8 @@ class MediaItem {
   final double? rating;
   final String? country;
   final String? language;
+  final String? imdbId;
+  final Map<String, dynamic> extras;
 
   factory MediaItem.fromJson(Map<String, dynamic> json) {
     return MediaItem(
@@ -65,6 +69,10 @@ class MediaItem {
       rating: _double(json['rating']),
       country: json['country'] == null ? null : _text(json['country']),
       language: json['language'] == null ? null : _text(json['language']),
+      imdbId: json['imdbId'] == null ? null : _text(json['imdbId']),
+      extras: json['extras'] is Map
+          ? (json['extras'] as Map).cast<String, dynamic>()
+          : <String, dynamic>{},
     );
   }
 
@@ -81,6 +89,8 @@ class MediaItem {
     'rating': rating,
     'country': country,
     'language': language,
+    'imdbId': imdbId,
+    'extras': extras,
   };
 
   String get languageLabel {
