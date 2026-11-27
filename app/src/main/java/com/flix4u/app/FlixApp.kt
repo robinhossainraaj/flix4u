@@ -44,14 +44,15 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.viewinterop.AndroidView
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.media3.common.MediaItem
 import androidx.media3.exoplayer.ExoPlayer
-import androidx.media3.ui.compose.PlayerSurface
-import androidx.media3.ui.compose.SURFACE_TYPE_SURFACE_VIEW
+import androidx.media3.ui.PlayerView
 import coil.compose.AsyncImage
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -200,10 +201,9 @@ private fun ListCard(item: StreamItem, onClick: () -> Unit) {
     }
 }
 
-@androidx.annotation.OptIn(androidx.media3.common.util.UnstableApi::class)
 @Composable
 private fun PlayerOverlay(item: StreamItem, onDismiss: () -> Unit) {
-    val context = androidx.compose.ui.platform.LocalContext.current
+    val context = LocalContext.current
     val player = remember(item.url) {
         ExoPlayer.Builder(context).build().apply {
             setMediaItem(MediaItem.fromUri(item.url))
@@ -221,9 +221,13 @@ private fun PlayerOverlay(item: StreamItem, onDismiss: () -> Unit) {
             modifier = Modifier.fillMaxWidth()
         ) {
             Column {
-                PlayerSurface(
-                    player = player,
-                    surfaceType = SURFACE_TYPE_SURFACE_VIEW,
+                AndroidView(
+                    factory = { ctx ->
+                        PlayerView(ctx).apply {
+                            this.player = player
+                            useController = true
+                        }
+                    },
                     modifier = Modifier.fillMaxWidth().aspectRatio(16f / 9f)
                 )
                 Row(
