@@ -1,49 +1,35 @@
 # Flix4U
 
-Guest-only Flutter streaming app for movies, web series, and anime.
+Android HLS (M3U8) streaming app. The GitHub repo itself is the database: the app fetches `channels.json` from this repo (raw GitHub URL) and renders the streams in a grid or list view with a built-in Media3 HLS player.
 
-- App name: **Flix4U**
-- Android package: **com.flix4u.rorax**
-- Flutter app: `flix4u-app/`
-- Node backend: `flix4u-backend/`
+## Features
 
-## Build the APK
+- Grid view / list view toggle
+- HLS player (Media3 / ExoPlayer) in a dialog overlay
+- Streams loaded from `channels.json` in this repo — add streams by committing JSON, the app's Refresh button pulls the latest
+- Dark theme, landscape-friendly player
 
-The GitHub Actions workflow automatically builds the release APK:
+## JSON format (`channels.json`)
 
-```txt
-.github/workflows/build-flix4u-apk.yml
+```json
+[
+  {
+    "id": "bigbuck",
+    "title": "Big Buck Bunny",
+    "description": "Classic open movie test stream",
+    "url": "https://example.com/stream.m3u8",
+    "category": "Movies",
+    "logo": "https://example.com/logo.png"
+  }
+]
 ```
 
-Run **Actions → Build Flix4U APK**, then download the `flix4u-release-apk` artifact.
+A top-level `{"streams": [...]}` or `{"channels": [...]}` object also works.
 
-## Local build
+## Build
 
-```bash
-cd flix4u-app
-chmod +x bootstrap_android.sh configure_android.sh
-./bootstrap_android.sh
-```
+GitHub Actions (`.github/workflows/build.yml`) builds debug + release APKs on every push to `main` and publishes them to a GitHub Release. APKs are also available as workflow artifacts.
 
-Output:
+## Stack
 
-```txt
-build/app/outputs/flutter-apk/app-release.apk
-```
-
-## Backend
-
-The app works without a backend using Archive.org and AniList directly. For anime playback, deploy `flix4u-backend/` to Vercel and set:
-
-```env
-STREAM_PROXY_SECRET=<long-random-secret>
-TMDB_API_KEY=<optional>
-```
-
-Then set the repository variable:
-
-```txt
-FLIX4U_BACKEND_URL=https://your-project.vercel.app
-```
-
-No login, no Firebase, no user accounts.
+Kotlin, Jetpack Compose (Material 3), Media3 ExoPlayer + HLS, kotlinx.serialization, Coil.
